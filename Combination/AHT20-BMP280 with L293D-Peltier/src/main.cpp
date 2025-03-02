@@ -5,12 +5,12 @@
 
 #define SDA_PIN 21
 #define SCL_PIN 22
-#define L293D_PIN1 16
-#define L293D_PIN2 17
-#define PLT_PIN 32
+#define fanC 17
+#define fanH 16
+#define peltier 32
 
 // Variables
-float desiredTemperature = 29;
+float desiredTemperature = 30;
 float temperatureInterval = 5;
 
 // Objetos de tipo sensor
@@ -25,7 +25,6 @@ void controlTemperatureModule(float actualTemperature, char action);
 void setup()
 {
   Serial.begin(115200);
-  Serial.println(F("AHT20+BMP280 test"));
 
   Wire.begin(SDA_PIN, SCL_PIN);
 
@@ -49,12 +48,12 @@ void setup()
                     Adafruit_BMP280::FILTER_X16,      /* Filtrado. */
                     Adafruit_BMP280::STANDBY_MS_500); /* Tiempo de Standby. */
 
-  pinMode(L293D_PIN1, OUTPUT); // Pin del motor 1 (Frio)
-  pinMode(L293D_PIN2, OUTPUT); // Pin del motor 2 (Caliente)
-  pinMode(PLT_PIN, OUTPUT);    // Pin del relevador de la Peltier
-  digitalWrite(L293D_PIN1, LOW);
-  digitalWrite(L293D_PIN2, LOW);
-  digitalWrite(PLT_PIN, HIGH);
+  pinMode(fanC, OUTPUT); // Pin del motor 1 (Frio)
+  pinMode(fanH, OUTPUT); // Pin del motor 2 (Caliente)
+  pinMode(peltier, OUTPUT);    // Pin del relevador de la Peltier
+  digitalWrite(fanC, LOW);
+  digitalWrite(fanH, LOW);
+  digitalWrite(peltier, HIGH);
 }
 
 void loop()
@@ -62,7 +61,7 @@ void loop()
   printTempSensorInfo(myBMP, myAHT20);
   float actualTemperature = myAHT20.getTemperature();
   controlTemperatureModule(actualTemperature,'A');
-  delay(750);
+  yield();
 
 }
 
@@ -104,21 +103,21 @@ void controlTemperatureModule(float actualTemperature, char action)
   switch (action)
   {
   case 'N':
-    digitalWrite(L293D_PIN1, LOW);
-    digitalWrite(L293D_PIN2, LOW);
-    digitalWrite(PLT_PIN, HIGH);
+    digitalWrite(fanC, LOW);
+    digitalWrite(fanH, LOW);
+    digitalWrite(peltier, HIGH);
     break;
 
   case 'C':
-    digitalWrite(L293D_PIN1, HIGH);
-    digitalWrite(L293D_PIN2, LOW);
-    digitalWrite(PLT_PIN, LOW);
+    digitalWrite(fanC, HIGH);
+    digitalWrite(fanH, LOW);
+    digitalWrite(peltier, LOW);
     break;
 
   case 'H':
-    digitalWrite(L293D_PIN1, LOW);
-    digitalWrite(L293D_PIN2, HIGH);
-    digitalWrite(PLT_PIN, LOW);
+    digitalWrite(fanC, LOW);
+    digitalWrite(fanH, HIGH);
+    digitalWrite(peltier, LOW);
     break;
 
   default:

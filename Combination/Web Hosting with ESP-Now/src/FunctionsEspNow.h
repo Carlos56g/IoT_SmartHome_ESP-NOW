@@ -1,18 +1,7 @@
-//MANY to MANY
-//Cada que se presiona el boton de Reset en un ESP-NOW, se manda una señal a todos los demas ESP-NOW de la red
-//Cambiando el estado del pin 13 por 1 seg a Alto
-//De este modo, todas las placas hacen la funcion de Receptoras y Emisoras
-//En el proyecto, el HOST mandara instrucciones y recibirá datos de los demas modulos
-//Los modulos recibiran instrucciones del host, y tambien mandaran los datos
-
-#include <Wifi.h>
 #include <esp_now.h>
-#include <esp_wifi.h>
-#include "MAC_addresses.h"
-#define LEDPIN 13
-unsigned long ledStartTime = 0;
-bool ledOn = false;
-
+#include <Arduino.h>
+#include <WiFi.h>
+#include "MAC_addresses.h" //Archivo de cabecera  con las direcciones MAC de los ESP32
 
 //Se ejecutará cada que se ENVIEN datos con ESP-NOW
 void OnDataSent(const uint8_t* mac_addr, esp_now_send_status_t status){
@@ -24,17 +13,7 @@ void OnDataSent(const uint8_t* mac_addr, esp_now_send_status_t status){
 void SendMessage(uint8_t peer_id)
 {
 	String payload = "MY STRING";
-
 	esp_err_t result = esp_now_send(MACS[peer_id], (uint8_t*)payload.c_str(), payload.length());
-
-	if(result == ESP_OK)
-	{
-		Serial.println("Sent with success");
-	}
-	else
-	{
-		Serial.println("Error sending the data");
-	}
 }
 
 //Devuelve true si la direccion MAC coincide, usado en SearchSender
@@ -74,14 +53,6 @@ void OnMessageReceived(const uint8_t* mac, const uint8_t* data, int len)
 	auto sender_id = SearchSender(mac); //Busca el ID del emisor
 	Serial.printf("Sender id: %d\n", sender_id);
 
-	// Enciende el LED solo si no está encendido
-	if (!ledOn) {
-		digitalWrite(LEDPIN, HIGH); // Enciende el LED
-		ledStartTime = millis(); // Guarda el momento en que se encendió el LED
-		ledOn = true;
-	  }
-	Serial.println("Start Time:");
-	Serial.println(ledStartTime);
 }
 
 //Registra un dispositivo a la red de ESP-NOW con el ID especificado
@@ -106,16 +77,14 @@ void static RegisterPeeks()
 {
 	for(auto peek_id = 0; peek_id < MACS_COUNT; peek_id ++)
 	{
-		RegisterPeek(peek_id, WIFI_IF_AP);
+		RegisterPeek(peek_id, WIFI_IF_STA);
 	}
 }
 
 //Inicializa ESP-NOW
 void static InitEspNow()
 {
-	WiFi.mode(WIFI_AP); //Modo Access Point
-	esp_wifi_set_channel(10, WIFI_SECOND_CHAN_NONE);
-
+	WiFi.mode(WIFI_STA); //Modo Station (Cliente)
 	if(esp_now_init() != ESP_OK)
 	{
 		Serial.println("Error initializing ESP-NOW");
@@ -125,29 +94,5 @@ void static InitEspNow()
 		esp_now_register_send_cb(OnDataSent);
 		esp_now_register_recv_cb(OnMessageReceived);
 		RegisterPeeks();
-	}
-}
-
-
-
-
-void setup() {
-  Serial.begin(115200);
-  InitEspNow();
-  pinMode(LEDPIN,OUTPUT);
-
-  //Envia el mensaje a todos los dispositivos
-  for(int i=0;i<MACS_COUNT;i++ ){
-	SendMessage(i);
-  }
-}
-
-void loop()
-{
-	if (ledOn && millis() - ledStartTime >= 1000) { //Millis devuelve el tiempo que lleva encendida la placa
-		digitalWrite(LEDPIN, LOW);
-		ledOn = false;
-		ledStartTime=0;
-		Serial.println("LED APAGADO");
 	}
 }

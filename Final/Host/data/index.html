@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Smart Home</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <h1>Informacion de los Modulos:</h1>
+
+  <h2>Temperatura:</h2>
+  <label>
+    <input type="checkbox" id="toggleAutoMode" onchange="toggleInputState()" checked> Modo Automatico
+  </label>
+  <br><br>
+  <p>Temperatura Deseada</p>
+  <input type="number" id="tempAutoInput" onchange="updateTemperature(this.value, 'A')">
+  <br><br>
+  <button id="tempHotButton" onclick="UpdateTemperature(0,'H')">Encender Calefaccion</button>
+  <button id="tempColdButton" onclick="UpdateTemperature(0,'C')">Encender Aire Acondicionado</button>
+
+  <h2>Luz:</h2>
+  <div id="lightsInterface">
+    
+  </div>
+
+
+  <h2>Acceso:</h2>
+  <button onclick="changeBackgroundColor('lightgreen')">Verde</button>
+  <script src="script.js"></script>
+</body>
+</html>

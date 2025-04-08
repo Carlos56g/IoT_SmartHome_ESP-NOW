@@ -140,6 +140,7 @@ void setup() {
   for(int i=0;i<MACS_COUNT;i++ ){
 	SendMessage(i);
   }
+  Serial.println(WiFi.macAddress());
 }
 
 void loop()

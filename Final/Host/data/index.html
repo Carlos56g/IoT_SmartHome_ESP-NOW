@@ -10,7 +10,7 @@
 
   <h2>Temperatura:</h2>
   <label>
-    <input type="checkbox" id="toggleAutoMode" onchange="toggleInputState()" checked> Modo Automatico
+    <input type="checkbox" id="toggleAutoMode" onchange="toggleAutoModeTemp()" checked> Modo Automatico
   </label>
   <br><br>
   <p>Temperatura Deseada</p>
@@ -26,7 +26,20 @@
 
 
   <h2>Acceso:</h2>
-  <button onclick="changeBackgroundColor('lightgreen')">Verde</button>
+  <label>
+    <input type="checkbox" id="toggleSatateAccs" onchange="toggleSatateAccs()" checked> Encender Modulo de Acceso
+  </label>
+  <label>
+    <input type="checkbox" id="toggleCreateKey" onchange="toggleAutoModeAccs()" checked> Crear LLave
+  </label>
+  <br><br>
+  <input type="text" maxlength="15" id="accsKeyInput">
+  <br><br>
+  <button id="accsKeyButton" onclick="sendAccsData('K')">Crear Llave!</button>
+  <br><br>
+  <button id="accsOpenButton" onclick="sendAccsData('O')">Abir Acceso</button>
+  <button id="accsCloseButton" onclick="sendAccsData('C')">Cerrar Acceso</button>
+
   <script src="script.js"></script>
 </body>
 </html>

@@ -1,30 +1,37 @@
+#ifndef FUNCTIONSESPNOW_H
+#define FUNCTIONSESPNOW_H
+
 #include <esp_now.h>
 #include <Arduino.h>
 #include <WiFi.h>
 #include <esp_wifi.h>
 #include "MAC_addresses.h" //Archivo de cabecera  con las direcciones MAC de los ESP32
 #include "Structs.h"
+#include "UtilitiesFunctions.h"
 
 
-//Se ejecutará cada que se ENVIEN datos con ESP-NOW
-void OnDataSent(const uint8_t* mac_addr, esp_now_send_status_t status){
+void sendDate(int peekID);
+
+// Se ejecutará cada que se ENVIEN datos con ESP-NOW
+void onDataSent(const uint8_t *mac_addr, esp_now_send_status_t status)
+{
 	Serial.print("\r\nLast Packet Send Status:\t");
 	Serial.println(status == ESP_NOW_SEND_SUCCESS ? "Delivery Success" : "Delivery Fail");
 }
 
-//Envia un Mensaje por medio de ESP-NOW con el ID especificado
-void SendMessage(uint8_t peer_id, espNowData data)
+// Envia un Mensaje por medio de ESP-NOW con el ID especificado
+void sendData(uint8_t peerID, espNowData data)
 {
-	switch (peer_id)
+	switch (peerID)
 	{
-	case 1: //Temp
-		esp_now_send(MACS[peer_id], (uint8_t*) &data.temperatureModule, sizeof(tempDevice)); 
+	case 1: // Temp
+		esp_now_send(MACS[peerID], (uint8_t *)&data.temperatureModule, sizeof(tempDevice));
 		break;
-	case 2: //Luz
-		esp_now_send(MACS[peer_id], (uint8_t*) &data.lightModule, sizeof(lightDevice)*4); 
+	case 2: // Luz
+		esp_now_send(MACS[peerID], (uint8_t *)&data.lightModule, sizeof(lightDevice) * 4);
 		break;
-	case 3: //Accs
-		esp_now_send(MACS[peer_id], (uint8_t*) &data.accessModule, sizeof(accsDevice));
+	case 3: // Accs
+		esp_now_send(MACS[peerID], (uint8_t *)&data.accessModule, sizeof(accsDevice));
 		Serial.println(sizeof(data.accessModule));
 		break;
 	default:
@@ -33,55 +40,70 @@ void SendMessage(uint8_t peer_id, espNowData data)
 	}
 }
 
-//Devuelve true si la direccion MAC coincide, usado en SearchSender
-bool AreMacEquals(const uint8_t* src, const uint8_t* dst)
+// Devuelve true si la direccion MAC coincide, usado en SearchSender
+bool areMacEquals(const uint8_t *src, const uint8_t *dst)
 {
-	for(auto i = 0; i < 6; i++)
+	for (auto i = 0; i < 6; i++)
 	{
-		if(src[i] != dst[i]) return false;
+		if (src[i] != dst[i])
+			return false;
 	}
 	return true;
 }
 
-//Devuelve el ID del emisor dada una direccion MAC
-int SearchSender(const uint8_t* mac)
+// Devuelve el ID del emisor dada una direccion MAC
+int searchSender(const uint8_t *mac)
 {
-	for(auto sender_id = 0; sender_id < MACS_COUNT; sender_id++)
+	for (auto senderID = 0; senderID < MACS_COUNT; senderID++)
 	{
-		if(AreMacEquals(mac, MACS[sender_id])) return sender_id;
+		if (areMacEquals(mac, MACS[senderID]))
+			return senderID;
 	}
 	return -1;
 }
 
-void OnMessageReceived(const uint8_t* mac, const uint8_t* data, int len) {
-    Serial.printf("Packet received from: %02X:%02X:%02X:%02X:%02X:%02X\n", mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]);
-    Serial.printf("Bytes received: %d\n", len);
+void onDataReceived(const uint8_t *mac, const uint8_t *data, int len)
+{
+	Serial.printf("Packet received from: %02X:%02X:%02X:%02X:%02X:%02X\n", mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]);
+	Serial.printf("Bytes received: %d\n", len);
 
-	int senderID = SearchSender(mac); // Busca el ID del emisor
+	int senderID = searchSender(mac); // Busca el ID del emisor
 	// Crear un objeto de espNowData para almacenar los datos recibidos
+	
+	if(len==sizeof(char)){ //Primero validamos si no es una peticion de parte de un Modulo
+		char action=data[0];
+		switch (action)
+		{
+		case 'D': //Peticion para dar la fecha
+			sendDate(senderID);
+			break;
+		
+		default:
+			break;
+		}
+		return;
+	}
 
-	switch (senderID)
+	switch (senderID) //Sino, copiamos los datos en la estructura del Host de acuerdo al origen
 	{
-	case 1: //Temp
+	case 1: // Temp
 		memcpy(&receivedData.temperatureModule, data, sizeof(tempDevice));
 		break;
-	case 2: //Luz
-		memcpy(&receivedData.lightModule, data, sizeof(lightDevice)); 
+	case 2: // Luz
+		memcpy(&receivedData.lightModule, data, sizeof(lightDevice));
 		break;
-	case 3: //Accs
-		memcpy(&receivedData.accessModule, data, sizeof(accsDevice)); 
+	case 3: // Accs
+		memcpy(&receivedData.accessModule, data, sizeof(accsDevice));
+		getActualDate(receivedData.accessModule.date,sizeof(receivedData.accessModule.date));
 		break;
 	default:
 		Serial.println("ID INVALIDO");
 		break;
 	}
-
 }
 
-
-
-//Registra un dispositivo a la red de ESP-NOW con el ID especificado
-void RegisterPeek(uint8_t id, wifi_interface_t iface)
+// Registra un dispositivo a la red de ESP-NOW con el ID especificado
+void registerPeek(uint8_t id, wifi_interface_t iface)
 {
 	esp_now_peer_info_t peerInfo = {};
 	memcpy(peerInfo.peer_addr, MACS[id], 6);
@@ -89,38 +111,68 @@ void RegisterPeek(uint8_t id, wifi_interface_t iface)
 	peerInfo.encrypt = false;
 	peerInfo.ifidx = iface;
 
-	if (esp_now_add_peer(&peerInfo) != ESP_OK) {
+	if (esp_now_add_peer(&peerInfo) != ESP_OK)
+	{
 		Serial.println("Error registrando peer");
-	} else {
+	}
+	else
+	{
 		Serial.print("Peer registrado: ");
 		Serial.println(id);
 	}
 }
 
-//Registra todos los dispositivos
-void static RegisterPeeks()
+// Registra todos los dispositivos
+void static registerPeeks()
 {
-	for(auto peek_id = 0; peek_id < MACS_COUNT; peek_id ++)
+	for (auto peekID = 0; peekID < MACS_COUNT; peekID++)
 	{
-		RegisterPeek(peek_id, WIFI_IF_STA); //HOST
-		//RegisterPeek(peek_id, WIFI_IF_AP); //MODULO
+		registerPeek(peekID, WIFI_IF_STA); // HOST
+		// RegisterPeek(peek_id, WIFI_IF_AP); //MODULO
 	}
 }
 
-//Inicializa ESP-NOW
-void static InitEspNow()
+void sendDate(int peekID){
+	char date[20];
+	getDateServer(date,sizeof(date));
+	Serial.println("date:");
+	Serial.println(date);
+	Serial.println("sizeof():");
+	Serial.println(sizeof(date));
+	esp_now_send(MACS[peekID], (uint8_t *)&date, sizeof(date));
+}
+
+// Inicializa ESP-NOW
+void static initEspNow()
 {
-	WiFi.mode(WIFI_AP_STA); //Modo AP y Station HOST
-	//WiFi.mode(WIFI_AP); //Modo AP MODULO
-	//esp_wifi_set_channel(10, WIFI_SECOND_CHAN_NONE);
-	if(esp_now_init() != ESP_OK)
+	WiFi.mode(WIFI_AP_STA); // Modo AP y Station HOST
+	// WiFi.mode(WIFI_AP); //Modo AP MODULO
+	// esp_wifi_set_channel(10, WIFI_SECOND_CHAN_NONE);
+	Serial.printf("\n\nConectando a la RED: %s\n", ssid);
+	WiFi.begin(ssid, password);
+	while (WiFi.status() != WL_CONNECTED)
+	{
+		delay(250);
+		Serial.print(".");
+	}
+	// Imprime la Direccion IP del Server para acceder a el
+	Serial.println("\n\nWiFi Conectado Corecctamente!\nDireccion IP: ");
+	Serial.print(WiFi.localIP());
+	Serial.printf("\nCanal Wifi: %d\n\n", WiFi.channel());
+	if (esp_now_init() != ESP_OK)
 	{
 		Serial.println("Error initializing ESP-NOW");
 	}
 	else
 	{
-		esp_now_register_send_cb(OnDataSent);
-		esp_now_register_recv_cb(OnMessageReceived);
-		RegisterPeeks();
+		esp_now_register_send_cb(onDataSent);
+		esp_now_register_recv_cb(onDataReceived);
+		registerPeeks();
+	}
+	for (int peekID = 0; peekID < MACS_COUNT; peekID++)
+	{
+		sendDate(peekID);
 	}
 }
+
+#endif

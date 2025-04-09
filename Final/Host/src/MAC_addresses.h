@@ -7,3 +7,7 @@ const uint8_t MAC_ACCS[] = {0x78,0x42,0x1C,0x68,0x32,0xB1}; //0x78,0x42,0x1C,0x6
 
 const uint8_t* MACS[] = {MAC_HOST,MAC_TEMP,MAC_LGHT,MAC_ACCS};
 const uint8_t MACS_COUNT = sizeof(MACS) / sizeof(uint8_t*);
+
+// Credenciales de la Red
+const char *ssid = "Xiaomi_F85B";
+const char *password = "88889999";

@@ -2,70 +2,19 @@
 #include <esp_now.h>
 #include <ESPAsyncWebServer.h>
 #include <SPIFFS.h>
+#include <ArduinoJson.h>
 #include "FunctionsEspNow.h" //Archivo de cabecera que contiene la funciones personalizadas que se usaran con ESPNOW
 #include "Structs.h"
-#include "printFunctions.h"
-
+#include "UtilitiesFunctions.h"
 espNowData receivedData;
 
-void initializeData() {
-  // Rellenar el struct con los datos que deseas enviar
-  receivedData.idR = 1;
-  receivedData.idE = 2;
-  receivedData.instruction = 10;
-  
-  // Llenar los dispositivos de luz
-  receivedData.lightModule[0].pin = 12;
-  receivedData.lightModule[0].mode = 'A';
-  receivedData.lightModule[0].presence = true;
-  receivedData.lightModule[0].presencePin = 5;
-  receivedData.lightModule[0].timeOn = 0;
-  receivedData.lightModule[0].state = false;
-  receivedData.lightModule[0].defaultTime = 10;
-
-  // Llenar el dispositivo de temperatura
-  receivedData.temperatureModule.desiredTemperature = 22.5;
-  receivedData.temperatureModule.temperatureInterval = 2.0;
-  receivedData.temperatureModule.actualTemperature = 21.0;
-  receivedData.temperatureModule.actualHumidity = 50.0;
-  receivedData.temperatureModule.actualPressure = 1015;
-  receivedData.temperatureModule.Mode = 'A';
-
-  // Llenar el dispositivo de acceso
-  receivedData.accessModule.createKey = true;
-  strcpy(receivedData.accessModule.Key, "CarlosGarcia001");  // Llave de acceso
-  receivedData.accessModule.Mode = 'K';
-}
-
-
-// Credenciales de la Red
-const char *ssid = "Xiaomi_F85B";
-const char *password = "88889999";
-
 AsyncWebServer Server(80); // Numero de Puerto a Usar
-String header;             // Variable para Almacenar el HTTP Request
 
 void setup()
 {
   Serial.begin(115200);
-  WiFi.mode(WIFI_AP_STA); // Modo Access Point y Cliente WiFi
-  // Conexion a la red de Internet
-  Serial.printf("\n\nConectando a la RED: %s\n", ssid);
-  WiFi.begin(ssid, password);
-  while (WiFi.status() != WL_CONNECTED)
-  {
-    delay(250);
-    Serial.print(".");
-  }
-
-  // Imprime la Direccion IP del Server para acceder a el
-  Serial.println("\n\nWiFi Conectado Corecctamente!\nDireccion IP: ");
-  Serial.print(WiFi.localIP());
-  Serial.printf("\nCanal Wifi: %d\n\n", WiFi.channel());
-
-  InitEspNow();
   initializeData();
-
+  initEspNow();
   // Montar el sistema de archivos
   if (!SPIFFS.begin(true))
   {
@@ -83,28 +32,135 @@ void setup()
 
   // Ruta para obtener la informacion del modulo de Luz
   Server.on("/getLights", HTTP_GET, [](AsyncWebServerRequest *request)
-            {
-              SendMessage(2, receivedData);
-            });
+            { sendData(2, receivedData); });
 
   // Ruta para obtener la informacion del modulo de Luz
   Server.on("/getTemp", HTTP_GET, [](AsyncWebServerRequest *request)
-            {
-              SendMessage(1, receivedData);
-            });
+            { sendData(1, receivedData); });
 
-  // Ruta para obtener la informacion del modulo de Luz
-  Server.on("/getAccess", HTTP_GET, [](AsyncWebServerRequest *request)
+  /////////////////////////////////////// ACCESO
+  // Metodo para Crear un Nuevo Registro
+  Server.on("/Accs/CreateKey", HTTP_POST, [](AsyncWebServerRequest *request) {}, NULL, [](AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total)
             {
-              SendMessage(3, receivedData);
-            });
+                String body = String((char*)data).substring(0, len);
+
+                Serial.println("📩 Body recibido:");
+                Serial.println(body);
+
+                JsonDocument doc; // Usar JsonDocument
+
+                // Deserializar el JSON recibido
+                DeserializationError error = deserializeJson(doc, body);
+            
+                if (error) {
+                  Serial.println("Error al deserializar el JSON");
+                  request->send(400, "application/json", "{\"error\":\"Bad JSON\"}");
+                  return;
+                }
+            
+                // Asignar los valores del JSON al struct, haciendo la conversión de char a unsigned char
+                updateAccssData(doc);
+                sendData(3, receivedData);
+
+                // Lógica de procesamiento de datos
+                  // Función que procesa y envía la data
+
+                request->send(200, "application/json", "{\"status\":\"ok\"}"); });
+  Server.on("/Accs/Open", HTTP_POST, [](AsyncWebServerRequest *request) {}, NULL, [](AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total)
+            {
+                String body = String((char*)data).substring(0, len);
+
+                Serial.println("📩 Body recibido:");
+                Serial.println(body);
+
+                JsonDocument doc; // Usar JsonDocument
+
+                // Deserializar el JSON recibido
+                DeserializationError error = deserializeJson(doc, body);
+            
+                if (error) {
+                  Serial.println("Error al deserializar el JSON");
+                  request->send(400, "application/json", "{\"error\":\"Bad JSON\"}");
+                  return;
+                }
+            
+                // Asignar los valores del JSON al struct, haciendo la conversión de char a unsigned char
+
+                updateAccssData(doc);
+                sendData(3, receivedData);
+
+                request->send(200, "application/json", "{\"status\":\"ok\"}"); });
+  Server.on("/Accs/Close", HTTP_POST, [](AsyncWebServerRequest *request) {}, NULL, [](AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total)
+            {
+                String body = String((char*)data).substring(0, len);
+
+                Serial.println("📩 Body recibido:");
+                Serial.println(body);
+
+                JsonDocument doc; // Usar JsonDocument
+
+                // Deserializar el JSON recibido
+                DeserializationError error = deserializeJson(doc, body);
+            
+                if (error) {
+                  Serial.println("Error al deserializar el JSON");
+                  request->send(400, "application/json", "{\"error\":\"Bad JSON\"}");
+                  return;
+                }
+            
+                updateAccssData(doc);
+                sendData(3, receivedData);
+
+                request->send(200, "application/json", "{\"status\":\"ok\"}"); });
+  Server.on("/Accs/Off", HTTP_POST, [](AsyncWebServerRequest *request) {}, NULL, [](AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total)
+            {
+                String body = String((char*)data).substring(0, len);
+
+                Serial.println("📩 Body recibido:");
+                Serial.println(body);
+
+                JsonDocument doc; // Usar JsonDocument
+
+                // Deserializar el JSON recibido
+                DeserializationError error = deserializeJson(doc, body);
+            
+                if (error) {
+                  Serial.println("Error al deserializar el JSON");
+                  request->send(400, "application/json", "{\"error\":\"Bad JSON\"}");
+                  return;
+                }
+            
+                updateAccssData(doc);
+                sendData(3, receivedData);
+
+                request->send(200, "application/json", "{\"status\":\"ok\"}"); });
+  Server.on("/Accs/On", HTTP_POST, [](AsyncWebServerRequest *request) {}, NULL, [](AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total)
+            {
+                String body = String((char*)data).substring(0, len);
+
+                Serial.println("📩 Body recibido:");
+                Serial.println(body);
+
+                JsonDocument doc; // Usar JsonDocument
+
+                // Deserializar el JSON recibido
+                DeserializationError error = deserializeJson(doc, body);
+            
+                if (error) {
+                  Serial.println("Error al deserializar el JSON");
+                  request->send(400, "application/json", "{\"error\":\"Bad JSON\"}");
+                  return;
+                }
+            
+                updateAccssData(doc);
+                sendData(3, receivedData);
+
+                request->send(200, "application/json", "{\"status\":\"ok\"}"); });
   Server.begin();
 }
 
-
 void loop()
 {
-  printAccsDevice(receivedData.accessModule);
-  delay(1000);
+  // ACCESO
+  printAccsStatus(receivedData.accessModule);
 }
-

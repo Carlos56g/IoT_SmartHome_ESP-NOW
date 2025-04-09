@@ -40,8 +40,8 @@ void setup()
 
 void loop()
 {
-  writeKey(accesKey);
-  //accessWithNFC();
+  //writeKey(accesKey);
+  accessWithNFC();
 }
 
 bool writeNFCData(byte *data)

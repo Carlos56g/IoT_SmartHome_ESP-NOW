@@ -10,10 +10,9 @@
 #define statusLed 13
 
 // Struct del modulo  de Acceso
-accsDevice receivedData;
-
+accsDevice accsData;
 Servo servo0;                              // Objeto tipo Servo
-int servo0Proporties[3] = {32, 500, 2500}; // PIN, Min, Max
+int servo0Proporties[3] = {32, 500, 2400}; // PIN, Min, Max
 
 MFRC522::StatusCode status; // variable to get card status
 
@@ -25,13 +24,13 @@ uint8_t pageAddr = 0x06; // In this example we will write/read 16 bytes (page 6,
 // Pages 0 to 4 are for special functions.
 
 bool writeNFCData(unsigned char *data);
-char* ReadNFCData();
+char *ReadNFCData();
 void servoMove(float time, float degrees, int initialPosition, Servo &servo, int servoProperties[3]);
 void unlockAccess(Servo &servo, int servoProperties[3]);
-bool validateAccess(char* key);
+bool validateAccess(char *key);
 bool accessWithNFC();
-bool writeKey(char* key);
-void saveKey(char* key);
+bool writeKey(char *key);
+void saveKey(char *key);
 void readKeys();
 void controlAccess(accsDevice UserData);
 
@@ -45,53 +44,79 @@ void setup()
   pinMode(statusLed, OUTPUT);
 
   // Inicializar SPIFFS
-  if (!SPIFFS.begin(true)) {
+  if (!SPIFFS.begin(true))
+  {
     Serial.println("Error al montar SPIFFS");
     return;
   }
-  receivedData.createKey=true;
-  strcpy(reinterpret_cast<char*>(receivedData.Key), "CarlosGarcia123");
-  receivedData.Mode='K';
+  servo0.setPeriodHertz(50); // Frecuencia estándar de servo
+  servo0.attach(servo0Proporties[0], servo0Proporties[1], servo0Proporties[2]);
   InitEspNow();
-  Serial.println(WiFi.macAddress());
-  readKeys(); //Leera todas las llaves de acceso
+  readKeys();          // Leera todas las llaves de acceso
+  accsData.mode = 'K'; // Modo por defecto
 }
 
 void loop()
 {
-  controlAccess(receivedData);
+  controlAccess(accsData);
 }
 
 void controlAccess(accsDevice UserData)
 {
   if (UserData.createKey)
   {
-    if (!writeKey(UserData.Key))
+    if (!writeKey(UserData.key))
     {
-      Serial.printf("\nEsperando terjeta NFC para Grabar la Llave: %s",UserData.Key);
-      delay(1000);
+      Serial.printf("\nEsperando terjeta NFC para Grabar la Llave: %s", UserData.key);
+      delay(500);
       return;
     };
-    saveKey(UserData.Key);
+    saveKey(UserData.key);
   }
 
-  switch (UserData.Mode)
+  bool newAction = false;
+  if (UserData.mode != UserData.status)
+    newAction = true;
+
+  switch (UserData.mode)
   {
   case 'K':
-    accessWithNFC();
+    accsData.status='P';
+    if (!accessWithNFC() && accsData.status=='P')
+    {
+      return;
+    }
+    newAction = true;
     break;
   case 'O':
-    servoMove(2000, 180, 0, servo0, servo0Proporties);
+    if (accsData.status != 'O')
+    {
+      servoMove(2000, 180, 0, servo0, servo0Proporties);
+    }
+    accsData.status = 'O';
     break;
   case 'C':
-    servoMove(2000, 0, 180, servo0, servo0Proporties);
+    if (accsData.status != 'C')
+    {
+      servoMove(2000, -180, 180, servo0, servo0Proporties);
+    }
+    accsData.status = 'C';
+    accsData.mode='K';
     break;
-  case 'N':
+  case 'N': // Apagado
+    if (accsData.status != 'N')
+      accsData.status = 'N';
+    break;
+  case 'E':
+    accsData.status = 'K';
+    accsData.mode= 'K';
     break;
   default:
-    Serial.print("Invalid Option!");
     break;
   }
+
+  if (newAction)
+    sendData('A', accsData);
 }
 
 bool writeNFCData(unsigned char *data)
@@ -112,7 +137,7 @@ bool writeNFCData(unsigned char *data)
   return true;
 }
 
-char* ReadNFCData()
+char *ReadNFCData()
 {
   Serial.println("\nLeyendo Datos de la Tarjeta NFC... ");
   // data in 4 block is readed at once.
@@ -139,39 +164,38 @@ char* ReadNFCData()
   return data;
 }
 
-
 bool validateAccess(char *proposedKey)
 {
-  bool access=false;
+  bool access = false;
   char filteredProposedKey[16];
   memcpy(filteredProposedKey, proposedKey, 15);
-  filteredProposedKey[15]='\0';
+  filteredProposedKey[15] = '\0';
 
-  Serial.printf("\nIntento de Acceso con: %s",filteredProposedKey);
+  Serial.printf("\nIntento de Acceso con: %s", filteredProposedKey);
 
-  for(int i=0;i<MAX_KEYS_NUM;i++){
-    if(strcmp(filteredProposedKey, receivedData.Keys[i]) == 0){
-      access=true;
+  for (int i = 0; i < MAX_KEYS_NUM; i++)
+  {
+    if (strcmp(filteredProposedKey, accsData.keys[i]) == 0)
+    {
+      access = true;
       break;
     }
   }
 
+  memcpy(accsData.key, filteredProposedKey, 15); //Almacenamos el intento de Acceso en el struct
+
   if (access)
   {
     Serial.println("\nACEPTADO");
-    receivedData.Status='A';
-    SendMessage(0,receivedData);
+    accsData.status = 'A';
+    getActualDate(accsData.date, sizeof(accsData.date));
     return true;
   }
 
   Serial.println("\nDENEGADO");
-  receivedData.Status='D';
+  accsData.status = 'D';
+  getActualDate(accsData.date, sizeof(accsData.date));
 
-  for(int i=0;i<15;i++){
-    receivedData.Key[i]=filteredProposedKey[i];
-  }
-
-  SendMessage(0,receivedData);
   digitalWrite(statusLed, HIGH);
   delay(300);
   digitalWrite(statusLed, LOW);
@@ -217,13 +241,14 @@ bool accessWithNFC()
 
 void servoMove(float time, float degrees, int initialPosition, Servo &servo, int servoProperties[3])
 {
-  servo.attach(servoProperties[0], servoProperties[1], servoProperties[2]); // Inicializa un servo con los parametos de ancho de pulso adecuados y pines adecuados
+  // servo.attach(servoProperties[0], servoProperties[1], servoProperties[2]); // Inicializa un servo con los parametos de ancho de pulso adecuados y pines adecuados
   float stepSize;
   if (time != 0)               // Si el tiempo es diferente de 0, calculamos el tamaño de cada paso
     stepSize = degrees / time; // calculo del paso
   else
   {
     servo.write(initialPosition + degrees); // Si el tiempo es 0, escribimos directamente la posicion final en el servo
+    // servo.detach();
     return;
   }
   float currentPosition = initialPosition;
@@ -234,84 +259,95 @@ void servoMove(float time, float degrees, int initialPosition, Servo &servo, int
     delay(1);                                     // delay de 1ms por cada paso
   }
   delay(500);
-  servo.detach(); // Desconecta el servo del pin analogico, para que no haya movimientos erraticos por interferencias o ruido
+  // servo.detach(); // Desconecta el servo del pin analogico, para que no haya movimientos erraticos por interferencias o ruido
 }
 
 bool writeKey(char *key)
 {
   // Reset the loop if no new card present on the sensor/reader. This saves the entire process when idle.
-  if (!mfrc522.PICC_IsNewCardPresent()){
+  if (!mfrc522.PICC_IsNewCardPresent())
+  {
     return false;
   }
-    
+
   // Select one of the cards
-  if (!mfrc522.PICC_ReadCardSerial()){
+  if (!mfrc522.PICC_ReadCardSerial())
+  {
     return false;
   }
-  
-  unsigned char* uKey = (unsigned char*)(key);
+
+  unsigned char *uKey = (unsigned char *)(key);
   bool result = writeNFCData(uKey);
-  
-  if(result){
-    receivedData.createKey = false;
-    receivedData.Status='R';
+
+  if (result)
+  {
+    accsData.createKey = false;
+    accsData.status = 'R';
   }
 
   return result;
 }
 
-void readKeys() {
+void readKeys()
+{
   // Abrir el archivo para leer
   File file = SPIFFS.open("/Keys.txt", "r");
-  if (!file) {
+  if (!file)
+  {
     Serial.println("No se encontró el archivo");
     return;
   }
 
   String allKeys = file.readString();
-  file.close(); 
-
+  file.close();
   int start = 0;
   int end = 0;
   int keyID = 0;
   String individualKey = "";
 
   // Recorrer el string y separar las claves usando '\0' como delimitador
-  while (end < allKeys.length()) {
-    if (allKeys[end] == '\n') {
+  while (end < allKeys.length())
+  {
+    if (allKeys[end] == '\n')
+    {
       // Guardar la clave y mover al siguiente índice
       individualKey = allKeys.substring(start, end);
-      for(int i=0;i<15;i++){
-        receivedData.Keys[keyID][i]=individualKey[i]; // Almacenar la clave en el arreglo `keys`
+      for (int i = 0; i < 15; i++)
+      {
+        accsData.keys[keyID][i] = individualKey[i]; // Almacenar la clave en el arreglo `keys`
       }
-      keyID++;  // Incrementar el índice del arreglo de claves
+      keyID++; // Incrementar el índice del arreglo de claves
 
-      start = end + 1;  // Actualizar el punto de inicio para la siguiente clave
+      start = end + 1; // Actualizar el punto de inicio para la siguiente clave
     }
     end++;
   }
-  
+
   Serial.println("\n\nTodas las Llaves de Acceso:");
-  for(keyID=0;keyID<MAX_KEYS_NUM;keyID++){
-    for(int i=0;i<15;i++){
-      Serial.print(receivedData.Keys[keyID][i]);
+  for (keyID = 0; keyID < MAX_KEYS_NUM; keyID++)
+  {
+    for (int i = 0; i < 15; i++)
+    {
+      Serial.print(accsData.keys[keyID][i]);
     }
     Serial.println();
   }
 }
 
-
-void saveKey(char* key) {
+void saveKey(char *key)
+{
   // Abrir el archivo para escribir (o crear si no existe)
   File file = SPIFFS.open("/Keys.txt", "a");
-  if (!file) {
+  if (!file)
+  {
     Serial.println("Error al abrir el archivo de Keys");
     return;
   }
 
   // Convertir el arreglo de bytes en un String
   String keyStr = "";
-  for (int i = 0; i < 15; i++) {
+  for (int i = 0; i < 15; i++)
+  {
     // Convertir cada byte a un carácter y agregarlo al string
     keyStr += (char)key[i];
   }
@@ -321,5 +357,3 @@ void saveKey(char* key) {
   Serial.printf("\nKey: %s guardado en SPIFFS", keyStr.c_str());
   readKeys();
 }
-
-

@@ -1,6 +1,6 @@
 #ifndef STRUCTS_H
 #define STRUCTS_H
-#define MAX_KEYS_NUM 14
+#define MAX_KEYS_NUM 10
 
 //Struct de los dispositivos de LUZ
 struct lightDevice
@@ -25,7 +25,7 @@ struct tempDevice
   short actualTemperature;    //Temperatura Actual
   short actualHumidity;       //Humedad Actual
   short actualPressure;       //Presion Actual
-  char Mode;                  //A=Auto, N=Apagado, C=Frio, H=Caliente
+  char mode;                  //A=Auto, N=Apagado, C=Frio, H=Caliente
 };
 
 
@@ -33,10 +33,11 @@ struct tempDevice
 struct accsDevice
 {
   bool createKey;           // True=Pone al modulo en modo de creacion de llave de acceso
-  char Key[16];             // Almacena la llave de acceso
-  char Mode;                // O=Abrir Puerta,  C=Cerrar Puerta, N=Deshabilitado, K=Activar con Llave de acceso
-  char Keys[MAX_KEYS_NUM][16];         //Contiene todas las llaves de Acceso Almacenadas, 100 Keys de 16 Caracteres
-  char Status;              //Contiene el Status A=Aceptado, D=Denegado, R=Usuario Registrado
+  char key[16];             // Almacena la llave de acceso
+  char mode;                // O=Abrir Puerta,  C=Cerrar Puerta, N=Deshabilitado, K=Activar con Llave de acceso
+  char keys[MAX_KEYS_NUM][16];         //Contiene todas las llaves de Acceso Almacenadas, 100 Keys de 16 Caracteres
+  char status;              //Contiene el Status A=Aceptado, D=Denegado, R=Usuario Registrado
+  char date[20];            //Almacena la fecha de Acceso
 };
 
 struct espNowData {

@@ -32,11 +32,11 @@ struct tempDevice
 //Struct del modulo  de Acceso
 struct accsDevice
 {
-  bool createKey;           // True=Pone al modulo en modo de creacion de llave de acceso
+  bool createKey=false;           // True=Pone al modulo en modo de creacion de llave de acceso
   char key[16];             // Almacena la llave de acceso
-  char mode;                // O=Abrir Puerta,  C=Cerrar Puerta, N=Deshabilitado, K=Activar con Llave de acceso
+  char mode='K';                // O=Abrir Puerta,  C=Cerrar Puerta, N=Deshabilitado, K=Activar con Llave de acceso
   char keys[MAX_KEYS_NUM][16];         //Contiene todas las llaves de Acceso Almacenadas, 100 Keys de 16 Caracteres
-  char status;              //Contiene el Status A=Aceptado, D=Denegado, R=Usuario Registrado, W=Esperando Registro
+  char status='K';              //Contiene el Status A=Aceptado, D=Denegado, R=Usuario Registrado, W=Esperando Registro , Y=Llaves eliminadas, 
   char date[20];            //Almacena la fecha de Acceso
 };
 
@@ -50,5 +50,5 @@ struct espNowData {
 };
 
 extern accsDevice accsData;
-
+extern char prevStatus;
 #endif

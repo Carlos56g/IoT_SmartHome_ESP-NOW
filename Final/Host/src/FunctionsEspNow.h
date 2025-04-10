@@ -93,8 +93,14 @@ void onDataReceived(const uint8_t *mac, const uint8_t *data, int len)
 		memcpy(&receivedData.lightModule, data, sizeof(lightDevice));
 		break;
 	case 3: // Accs
-		memcpy(&receivedData.accessModule, data, sizeof(accsDevice));
-		getActualDate(receivedData.accessModule.date,sizeof(receivedData.accessModule.date));
+		memcpy(&receivedData.accessModule, data, sizeof(accsDevice));	//Copiamos los datos recividos a la variable global
+		getActualDate(receivedData.accessModule.date,sizeof(receivedData.accessModule.date)); //Actualizamos la fecha de los datos
+		accsEvent accsHistoryData; //Creamos una nueva variable para almacenar el acceso recibido
+		strcpy(accsHistoryData.key,receivedData.accessModule.key); // llenamos el struct
+		strcpy(accsHistoryData.date,receivedData.accessModule.date);
+		printAccsDevice(receivedData.accessModule);
+		accsHistoryData.status=receivedData.accessModule.status;
+		saveAccsHistory(accsHistoryData); //Lo guardamos en el almacenamiento interno del ESP32
 		break;
 	default:
 		Serial.println("ID INVALIDO");
@@ -173,6 +179,10 @@ void static initEspNow()
 	{
 		sendDate(peekID);
 	}
+}
+
+void requestModule(int peerID,char action){						//ACCESO: D=Eliminar LLaves, R=Request Data
+	esp_now_send(MACS[peerID],(uint8_t *)&action, sizeof(char));
 }
 
 #endif

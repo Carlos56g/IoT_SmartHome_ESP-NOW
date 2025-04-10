@@ -10,3 +10,19 @@ body {
     padding: 10px 20px;
     font-size: 16px;
   }
+
+  table {
+    border-collapse: collapse;
+    width: 60%;
+    margin: auto;
+  }
+
+  th, td {
+    border: 1px solid #444;
+    padding: 10px;
+    text-align: center;
+  }
+
+  th {
+    background-color: #e0e0e0;
+  }

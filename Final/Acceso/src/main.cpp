@@ -13,6 +13,7 @@
 accsDevice accsData;
 Servo servo0;                              // Objeto tipo Servo
 int servo0Proporties[3] = {32, 500, 2400}; // PIN, Min, Max
+char prevStatus;
 
 MFRC522::StatusCode status; // variable to get card status
 
@@ -52,8 +53,7 @@ void setup()
   servo0.setPeriodHertz(50); // Frecuencia estándar de servo
   servo0.attach(servo0Proporties[0], servo0Proporties[1], servo0Proporties[2]);
   InitEspNow();
-  readKeys();          // Leera todas las llaves de acceso
-  accsData.mode = 'K'; // Modo por defecto
+  readKeys(); // Leera todas las llaves de acceso
 }
 
 void loop()
@@ -63,60 +63,75 @@ void loop()
 
 void controlAccess(accsDevice UserData)
 {
+  bool newAction = false;
   if (UserData.createKey)
   {
     if (!writeKey(UserData.key))
     {
       Serial.printf("\nEsperando terjeta NFC para Grabar la Llave: %s", UserData.key);
+      digitalWrite(statusLed, HIGH);
       delay(500);
+      digitalWrite(statusLed, LOW);
       return;
     };
     saveKey(UserData.key);
-  }
-
-  bool newAction = false;
-  if (UserData.mode != UserData.status)
     newAction = true;
-
-  switch (UserData.mode)
+  }
+  else
   {
-  case 'K':
-    accsData.status='P';
-    if (!accessWithNFC() && accsData.status=='P')
+    if(accsData.status!='Y')
+      accsData.status = prevStatus;
+    switch (UserData.mode)
     {
-      return;
+    case 'K':
+      accessWithNFC();
+      if (accsData.status != 'D' && accsData.status != 'A') // AccessWithNFC changes the status
+      {
+        return;
+      }
+      newAction = true;
+      break;
+    case 'O':
+      if (accsData.status != 'O')
+      {
+        servoMove(2000, 180, 0, servo0, servo0Proporties);
+        strncpy(accsData.key, "Accion del Host", sizeof(accsData.key));
+        accsData.status = 'O';
+        newAction = true;
+      }
+      break;
+    case 'C':
+      if (accsData.status != 'C')
+      {
+        servoMove(2000, -180, 180, servo0, servo0Proporties);
+        strncpy(accsData.key, "Accion del Host", sizeof(accsData.key));
+        accsData.status = 'C';
+        accsData.mode = 'K';
+        newAction = true;
+      }
+      break;
+    case 'N': // Apagado
+      if (accsData.status != 'N')
+      {
+        accsData.status = 'N';
+        strncpy(accsData.key, "Accion del Host", sizeof(accsData.key));
+        newAction = true;
+      }
+      break;
+    case 'E':
+      accsData.status = 'K';
+      strncpy(accsData.key, "Accion del Host", sizeof(accsData.key));
+      accsData.mode = 'K';
+      newAction = true;
+      break;
     }
-    newAction = true;
-    break;
-  case 'O':
-    if (accsData.status != 'O')
-    {
-      servoMove(2000, 180, 0, servo0, servo0Proporties);
-    }
-    accsData.status = 'O';
-    break;
-  case 'C':
-    if (accsData.status != 'C')
-    {
-      servoMove(2000, -180, 180, servo0, servo0Proporties);
-    }
-    accsData.status = 'C';
-    accsData.mode='K';
-    break;
-  case 'N': // Apagado
-    if (accsData.status != 'N')
-      accsData.status = 'N';
-    break;
-  case 'E':
-    accsData.status = 'K';
-    accsData.mode= 'K';
-    break;
-  default:
-    break;
   }
-
   if (newAction)
+  {
+    printAccsDevice(UserData);
     sendData('A', accsData);
+    prevStatus = accsData.status;
+  }
 }
 
 bool writeNFCData(unsigned char *data)
@@ -182,7 +197,7 @@ bool validateAccess(char *proposedKey)
     }
   }
 
-  memcpy(accsData.key, filteredProposedKey, 15); //Almacenamos el intento de Acceso en el struct
+  memcpy(accsData.key, filteredProposedKey, 15); // Almacenamos el intento de Acceso en el struct
 
   if (access)
   {
@@ -217,6 +232,7 @@ void unlockAccess(Servo &servo, int servoProperties[3])
 
 bool accessWithNFC()
 {
+  accsData.status = 'J'; // Status Random que indica que se esta esperando acceso
   // Reset the loop if no new card present on the sensor/reader. This saves the entire process when idle.
   if (!mfrc522.PICC_IsNewCardPresent())
     return false;
@@ -286,74 +302,4 @@ bool writeKey(char *key)
   }
 
   return result;
-}
-
-void readKeys()
-{
-  // Abrir el archivo para leer
-  File file = SPIFFS.open("/Keys.txt", "r");
-  if (!file)
-  {
-    Serial.println("No se encontró el archivo");
-    return;
-  }
-
-  String allKeys = file.readString();
-  file.close();
-  int start = 0;
-  int end = 0;
-  int keyID = 0;
-  String individualKey = "";
-
-  // Recorrer el string y separar las claves usando '\0' como delimitador
-  while (end < allKeys.length())
-  {
-    if (allKeys[end] == '\n')
-    {
-      // Guardar la clave y mover al siguiente índice
-      individualKey = allKeys.substring(start, end);
-      for (int i = 0; i < 15; i++)
-      {
-        accsData.keys[keyID][i] = individualKey[i]; // Almacenar la clave en el arreglo `keys`
-      }
-      keyID++; // Incrementar el índice del arreglo de claves
-
-      start = end + 1; // Actualizar el punto de inicio para la siguiente clave
-    }
-    end++;
-  }
-
-  Serial.println("\n\nTodas las Llaves de Acceso:");
-  for (keyID = 0; keyID < MAX_KEYS_NUM; keyID++)
-  {
-    for (int i = 0; i < 15; i++)
-    {
-      Serial.print(accsData.keys[keyID][i]);
-    }
-    Serial.println();
-  }
-}
-
-void saveKey(char *key)
-{
-  // Abrir el archivo para escribir (o crear si no existe)
-  File file = SPIFFS.open("/Keys.txt", "a");
-  if (!file)
-  {
-    Serial.println("Error al abrir el archivo de Keys");
-    return;
-  }
-
-  // Convertir el arreglo de bytes en un String
-  String keyStr = "";
-  for (int i = 0; i < 15; i++)
-  {
-    // Convertir cada byte a un carácter y agregarlo al string
-    keyStr += (char)key[i];
-  }
-
-  file.println(keyStr);
-  file.close();
-  Serial.printf("\nKey: %s guardado en SPIFFS", keyStr.c_str());
-  readKeys();
 }

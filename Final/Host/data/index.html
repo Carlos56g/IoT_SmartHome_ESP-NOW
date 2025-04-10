@@ -27,18 +27,26 @@
 
   <h2>Acceso:</h2>
   <label>
-    <input type="checkbox" id="toggleSatateAccs" onchange="toggleSatateAccs()" checked> Encender Modulo de Acceso
+    <input type="checkbox" id="toggleSatateAccs" checked onchange="OnOffAccs()"> Encender Modulo de Acceso
   </label>
   <label>
-    <input type="checkbox" id="toggleCreateKey" onchange="toggleAutoModeAccs()" checked> Crear LLave
+    <input type="checkbox" id="toggleCreateKey" onchange="toggleCreateKeyAccs()" checked> Crear LLave
   </label>
   <br><br>
   <input type="text" maxlength="15" id="accsKeyInput">
   <br><br>
-  <button id="accsKeyButton" onclick="sendAccsData('K')">Crear Llave!</button>
+  <button id="accsKeyButton" onclick="accsCreateKey()">Crear Llave!</button>
   <br><br>
-  <button id="accsOpenButton" onclick="sendAccsData('O')">Abir Acceso</button>
-  <button id="accsCloseButton" onclick="sendAccsData('C')">Cerrar Acceso</button>
+  <button id="accsOpenButton" onclick="accsOpen()">Abir Acceso</button>
+  <button id="accsCloseButton" onclick="accsClose()">Cerrar Acceso</button>
+
+  <a href="/Accs/History">
+    <button>Ver Historial</button>
+  </a>
+
+  <a href="/Accs/Keys">
+    <button>Administrar llaves</button>
+  </a>
 
   <script src="script.js"></script>
 </body>

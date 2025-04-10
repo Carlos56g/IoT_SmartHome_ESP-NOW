@@ -24,7 +24,7 @@ void sendData(char action, accsDevice data)
 	case 'A': // Accs
 		esp_now_send(MACS[0], (uint8_t *)&data, sizeof(accsDevice));
 		break;
-	case 'D': //Peticion para obtner la fecha(DATE) del Host
+	case 'D': // Peticion para obtner la fecha (DATE) del Host
 		esp_now_send(MACS[0], (uint8_t *)&action, sizeof(char));
 		break;
 	default:
@@ -55,7 +55,7 @@ int searchSender(const uint8_t *mac)
 	return -1;
 }
 
-void onMessageReceived(const uint8_t *mac, const uint8_t *data, int len)
+void onDataReceived(const uint8_t *mac, const uint8_t *data, int len)
 {
 	Serial.printf("Packet received from: %02X:%02X:%02X:%02X:%02X:%02X\n", mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]);
 	Serial.printf("Bytes received: %d\n", len);
@@ -63,21 +63,40 @@ void onMessageReceived(const uint8_t *mac, const uint8_t *data, int len)
 	int senderID = searchSender(mac); // Busca el ID del emisor
 	// Crear un objeto de espNowData para almacenar los datos recibidos
 
-	switch (senderID)
+	if (senderID == 0)
 	{
-	case 0: // SOLO PUEDE RECIBIR DEL HOST
-		if (len == sizeof(accsDevice))
+		if (len == sizeof(char))
+		{
+			char action = data[0];
+			switch (action)
+			{
+			case 'D': // Eliminar llaves
+				deleteKeys();
+				strncpy(accsData.key, "Accion del Host", sizeof(accsData.key));
+				accsData.status = 'Y';
+				sendData('A',accsData);
+				break;
+			case 'R': // Request Data
+				sendData('A', accsData);
+				break;
+			}
+		}
+		// SOLO PUEDE RECIBIR DEL HOST
+		else if (len == sizeof(accsDevice))
+		{
+			accsDevice tempData;
 			memcpy(&accsData, data, sizeof(accsDevice));
-		if (len == sizeof(char[20]))
+		}
+		else if (len == sizeof(char[20])) // Si tiene
 		{
 			char timeString[20];
 			memcpy(timeString, data, len);
 			setDateString(timeString);
 		}
-		break;
-	default:
+	}
+	else
+	{
 		Serial.println("ID INVALIDO");
-		break;
 	}
 }
 
@@ -111,22 +130,24 @@ void static registerPeeks()
 	}
 }
 
-
-void getActualDate(char* date, size_t size){
+void getActualDate(char *date, size_t size)
+{
 	struct tm timeInfo;
 	short tries;
-	while (!getLocalTime(&timeInfo)) {
-	  Serial.println("Error al obtener la hora");
-	  sendData('D',accsData);
-	  delay(1000);
-	  if(tries>10){
-		Serial.println("No fue posible obtener la fecha por parte del host");
-		return;
-	  }
-	  tries++;
+	while (!getLocalTime(&timeInfo))
+	{
+		Serial.println("Error al obtener la hora");
+		sendData('D', accsData);
+		delay(1000);
+		if (tries > 10)
+		{
+			Serial.println("No fue posible obtener la fecha por parte del host");
+			return;
+		}
+		tries++;
 	}
-	strftime(date, size, "%Y-%m-%dT%H:%M:%S", &timeInfo); //Lo castea a tipo ISO
-  }
+	strftime(date, size, "%Y-%m-%dT%H:%M:%S", &timeInfo); // Lo castea a tipo ISO
+}
 
 // Inicializa ESP-NOW
 void static InitEspNow()
@@ -141,12 +162,11 @@ void static InitEspNow()
 	else
 	{
 		esp_now_register_send_cb(onDataSent);
-		esp_now_register_recv_cb(onMessageReceived);
+		esp_now_register_recv_cb(onDataReceived);
 		registerPeeks();
 	}
 	char date[20];
-	getActualDate(date,sizeof(date));
+	getActualDate(date, sizeof(date));
 }
-
 
 #endif

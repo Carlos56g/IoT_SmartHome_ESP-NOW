@@ -1,3 +1,12 @@
+const accsData = {
+    createKey: false,
+    key: "",
+    mode: "",
+    keys: [],
+    status: "",
+    date: ""
+};
+
 function toggleAutoModeTemp() {
     const checkbox = document.getElementById("toggleAutoMode");
     const tempAutoInput = document.getElementById("tempAutoInput");
@@ -8,7 +17,7 @@ function toggleAutoModeTemp() {
     tempColdButton.disabled = checkbox.checked;
 }
 
-function toggleAutoModeAccs() {
+function toggleCreateKeyAccs() {
     const checkbox = document.getElementById("toggleCreateKey");
     const accsKeyInput = document.getElementById("accsKeyInput");
     const createKetButton = document.getElementById("accsKeyButton");
@@ -16,7 +25,7 @@ function toggleAutoModeAccs() {
     createKetButton.disabled = !checkbox.checked;
 }
 
-function toggleSatateAccs() {
+function toggleOnOffAccs() {
     const checkbox = document.getElementById("toggleSatateAccs");
     const toggleCreateKey = document.getElementById("toggleCreateKey");
     const accsKeyInput = document.getElementById("accsKeyInput");
@@ -28,110 +37,100 @@ function toggleSatateAccs() {
     createKetButton.disabled = !checkbox.checked;
     accsOpenButton.disabled = !checkbox.checked;
     accsCloseButton.disabled = !checkbox.checked;
-    const accsData = {
-        createKey: false,
-        key: "",
-        mode: "",
-        keys: [],
-        status: "",
-        date: ""
-    };
-    if (!checkbox.checked) {
-        accsData.mode="N";
-        // Enviar la petición GET con un header personalizado
-        fetch("http://192.168.31.191/Accs/Off", {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(accsData)
-        })
-            .then(response => response.json())
-            .then(data => console.log(data))
-            .catch(error => console.error('Error:', error));
-    }else{
-        accsData.mode="E";
-        // Enviar la petición GET con un header personalizado
-        fetch("http://192.168.31.191/Accs/On", {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(accsData)
-        })
-            .then(response => response.json())
-            .then(data => console.log(data))
-            .catch(error => console.error('Error:', error));
+    return checkbox.checked;
+}
 
+function OnOffAccs() {
+    if (toggleOnOffAccs()) {
+        accsOn();
+    }
+    else {
+        accsOff();
     }
 }
 
-function updateTemperature(temp, mode) {
-    console.log(temp);
-    console.log(mode);
+function accsOff() {
+    accsData.createKey = false;
+    accsData.mode = "N";
+    // Enviar la petición GET con un header personalizado
+    fetch("http://192.168.31.191/api/Accs/OnOff", {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(accsData)
+    })
+        .then(response => response.json())
+        .then(data => console.log(data))
+        .catch(error => console.error('Error:', error));
 }
 
-function sendAccsData(action) {
+function accsOn() {
+    accsData.createKey = false;
+    accsData.mode = "E";
+    // Enviar la petición GET con un header personalizado
+    fetch("http://192.168.31.191/api/Accs/OnOff", {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(accsData)
+    })
+        .then(response => response.json())
+        .then(data => console.log(data))
+        .catch(error => console.error('Error:', error));
 
-    const keyValue = document.getElementById("accsKeyInput").value;
-
-    const accsData = {
-        createKey: false,
-        key: keyValue,
-        mode: action,
-        keys: [],
-        status: "",
-        date: ""
-    };
-
-    switch (action) {
-        case 'K':
-            accsData.createKey = true;
-            accsData.status = "W";
-            // Enviar la petición GET con un header personalizado
-            fetch("http://192.168.31.191/Accs/CreateKey", {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(accsData)
-            })
-                .then(response => response.json())
-                .then(data => console.log(data))
-                .catch(error => console.error('Error:', error));
-            break;
-        case 'O':
-            // Enviar la petición GET con un header personalizado
-            fetch("http://192.168.31.191/Accs/CreateKey", {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(accsData)
-            })
-                .then(response => response.json())
-                .then(data => console.log(data))
-                .catch(error => console.error('Error:', error));
-            console.log("Abriendo Acceso");
-            break;
-        case 'C':
-            // Enviar la petición GET con un header personalizado
-            fetch("http://192.168.31.191/Accs/CreateKey", {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(accsData)
-            })
-                .then(response => response.json())
-                .then(data => console.log(data))
-                .catch(error => console.error('Error:', error));
-            console.log("Cerrando Acceso");
-            break;
-        default:
-            console.log("REQUEST INVALIDO!")
-    }
 }
+
+function accsCreateKey() {
+    accsData.createKey = true;
+    accsData.mode = "K";
+    accsData.key = document.getElementById("accsKeyInput").value;
+    // Enviar la petición GET con un header personalizado
+    fetch("http://192.168.31.191/api/Accs/CreateKey", {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(accsData)
+    })
+        .then(response => response.json())
+        .then(data => console.log(data))
+        .catch(error => console.error('Error:', error));
+}
+
+function accsOpen() {
+    accsData.createKey = false;
+    accsData.mode = "O";
+    fetch("http://192.168.31.191/api/Accs/OpenClose", {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(accsData)
+    })
+        .then(response => response.json())
+        .then(data => console.log(data))
+        .catch(error => console.error('Error:', error));
+    console.log("Abriendo Acceso");
+}
+
+function accsClose() {
+    accsData.createKey = false;
+    accsData.mode = "C";
+    fetch("http://192.168.31.191/api/Accs/OpenClose", {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(accsData)
+    })
+        .then(response => response.json())
+        .then(data => console.log(data))
+        .catch(error => console.error('Error:', error));
+    console.log("Cerrando Acceso");
+}
+
 
 function createLightInterface() {
     fetch("http://192.168.31.191/getLights") //Metodo Get que obtiene la informacion de luces del modulo
@@ -148,5 +147,82 @@ function createLightInterface() {
         })
 
         .catch(error => console.log('Error al obtener datos:', error));
+}
+
+
+function getAccsHistory() {
+    fetch('/api/Accs/History/get')
+        .then(response => response.json())
+        .then(data => {
+            const tbody = document.getElementById('historyBody');
+            data.forEach(item => {
+                const row = document.createElement('tr');
+                row.innerHTML = `<td>${item.key}</td><td>${item.date}</td><td>${item.status}</td>`;
+                tbody.appendChild(row);
+            });
+        })
+        .catch(err => console.error("Error al cargar historial:", err));
 
 }
+
+function getAccsKeys() {
+    fetch('/api/Accs/Keys/get')
+        .then(response => response.json())
+        .then(data => {
+            const tbody = document.getElementById('keysBody');
+            tbody.innerHTML = "";
+            data.forEach((key, index) => {
+                const row = document.createElement('tr');
+                row.innerHTML = `<td>${index + 1}</td><td>${key.key}</td>`;
+                tbody.appendChild(row);
+            });
+        })
+        .catch(error => console.error("Error al obtener las llaves:", error));
+}
+
+function deleteAccsHistory() {
+    fetch('/api/Accs/History/delete', {
+      method: 'GET',  // Usamos el método GET para llamar al servidor
+    })
+    .then(response => response.text())  // Respuesta en formato de texto
+    .then(data => {
+      console.log("Respuesta del servidor:", data);
+      alert(data);  // Muestra la respuesta, en este caso "Historial eliminado!"
+    })
+    .catch(error => {
+      console.error("Error al eliminar el historial:", error);
+      alert("Hubo un problema al eliminar el historial.");
+    });
+  }
+
+
+function deleteAccsHistory() {
+  fetch('/api/Accs/History/delete', {
+    method: 'GET',  // Usamos el método GET para llamar al servidor
+  })
+  .then(response => response.text())  // Respuesta en formato de texto
+  .then(data => {
+    console.log("Respuesta del servidor:", data);
+    alert(data);  // Muestra la respuesta, en este caso "Historial eliminado!"
+  })
+  .catch(error => {
+    console.error("Error al eliminar el historial:", error);
+    alert("Hubo un problema al eliminar el historial.");
+  });
+}
+
+function deleteAccsKeys() {
+    fetch('/api/Accs/Keys/delete', {
+      method: 'GET',  // Usamos el método GET para llamar al servidor
+    })
+    .then(response => response.text())  // Respuesta en formato de texto
+    .then(data => {
+      console.log("Respuesta del servidor:", data);
+      alert(data);  // Muestra la respuesta, en este caso "Historial eliminado!"
+    })
+    .catch(error => {
+      console.error("Error al eliminar las llaves:", error);
+      alert("Hubo un problema al eliminar las llaves.");
+    });
+  }
+  

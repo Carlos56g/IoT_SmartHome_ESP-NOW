@@ -37,6 +37,23 @@ void printAccsDevice(const accsDevice &device)
   Serial.println(device.status);
 }
 
+void printAccsHistory(std::list<accsEvent> accsHistory){
+  accsEvent accsEvent;
+  Serial.println(accsHistory.size());
+  Serial.println("Historial De Acceso: ");
+  while(!accsHistory.empty()){
+    accsEvent=accsHistory.back();
+    accsHistory.pop_back();
+    Serial.print("Key: ");
+    Serial.print(accsEvent.key);
+    Serial.print("\tFecha: ");
+    Serial.print(accsEvent.date);
+    Serial.print("\tStatus: ");
+    Serial.print(accsEvent.status);
+    Serial.println();
+  }
+}
+
 void initializeData()
 {
   // Rellenar el struct con los datos que deseas enviar
@@ -102,15 +119,15 @@ void printAccsStatus(const accsDevice &device)
     Serial.printf("\nFecha: %s", device.date);
     break;
   case 'N':
-  Serial.println("\nEstado: Deshabilitado");
-  Serial.printf("Key: %s", device.key);
-  Serial.printf("\nFecha: %s", device.date);
+    Serial.println("\nEstado: Deshabilitado");
+    Serial.printf("Key: %s", device.key);
+    Serial.printf("\nFecha: %s", device.date);
     break;
   case 'K':
-  Serial.println("\nEstado: Habilitado");
-  Serial.printf("Key: %s", device.key);
-  Serial.printf("\nFecha: %s", device.date);
-  break;
+    Serial.println("\nEstado: Habilitado");
+    Serial.printf("Key: %s", device.key);
+    Serial.printf("\nFecha: %s", device.date);
+    break;
   }
   delay(1000);
 }
@@ -196,17 +213,108 @@ void getActualDate(char *date, size_t size)
   strftime(date, size, "%Y-%m-%dT%H:%M:%S", &timeInfo); // Lo castea a tipo ISO
 }
 
-void updateAccssData(JsonDocument doc){
+void updateAccssData(JsonDocument doc)
+{
   receivedData.accessModule.createKey = doc["createKey"];
-            
-  jsonCharParse(receivedData.accessModule.key,doc,"key");
 
-  receivedData.accessModule.mode = ((const char*)doc["mode"])[0];
+  jsonCharParse(receivedData.accessModule.key, doc, "key");
 
-  receivedData.accessModule.status = ((const char*)doc["status"])[0];
+  receivedData.accessModule.mode = ((const char *)doc["mode"])[0];
 
-  getActualDate(receivedData.accessModule.date,sizeof(receivedData.accessModule.date));
+  receivedData.accessModule.status = ((const char *)doc["status"])[0];
 
+  getActualDate(receivedData.accessModule.date, sizeof(receivedData.accessModule.date));
 }
+
+void readAccsHistory()
+{
+  // Abrir el archivo para leer
+  File file = SPIFFS.open("/AccsHistory.txt", "r");
+  if (!file)
+  {
+    Serial.println("No se encontró el archivo AccsHistory.txt");
+    return;
+  }
+  String allAccsStringData=file.readString();
+  file.close();
+  accsEvent accsEvent;
+  String individualAccsStringData;
+  int startRow=0;
+  int endRow=0;
+  Serial.println("All String");
+  Serial.println(allAccsStringData);
+  accsHistory.clear();
+
+  while(true){
+    endRow=allAccsStringData.indexOf('\n',startRow);
+    Serial.println("endRow:");
+    Serial.println(endRow);
+    if(endRow==-1){
+      break;
+    }
+    individualAccsStringData=allAccsStringData.substring(startRow,endRow);
+
+    int endKey = individualAccsStringData.indexOf(',');
+    int endDate = individualAccsStringData.lastIndexOf(','); //Encuentra el final del registro = Status
+
+    String key = individualAccsStringData.substring(0,endKey); //Del inicio a el primer caracter nulo = Key
+    String date = individualAccsStringData.substring(endKey+1,endDate); //Lo restante es la fecha
+    String status = individualAccsStringData.substring(endDate+1,endDate+2); //Lo ultimo siempre sera el Status
+
+    key.toCharArray(accsEvent.key,sizeof(accsEvent.key));
+    accsEvent.status=status[0];
+    date.toCharArray(accsEvent.date,sizeof(accsEvent.date));
+    accsHistory.push_back(accsEvent);
+    startRow=endRow+1;
+  }
+  Serial.println("Elementos de la Lista:");
+  Serial.println(accsHistory.size());
+  printAccsHistory(accsHistory);
+}
+
+void saveAccsHistory(accsEvent accsEvent)
+{
+  // Abrir el archivo para registrar
+  File file = SPIFFS.open("/AccsHistory.txt", "a"); // crea un archivo si no esta, y lo abre en modo append
+  if (!file)
+  {
+    Serial.println("Error al abrir el archivo de AccsHistory");
+    return;
+  }
+  if(accsEvent.status=='J'){
+    file.close();
+    return;
+  } //Evento que indica que se esta esperando acceso o denegado
+     //Por alguna extraña razon, esta variable se manda como null a veces, haciendo que truene el archivo
+  
+  file.print(accsEvent.key);
+  file.print(',');
+  file.print(accsEvent.date);
+  file.print(',');
+  file.print(accsEvent.status);
+  file.print('\n');
+  file.close();
+}
+
+void deleteAccsHistory(){
+  if (SPIFFS.remove("/AccsHistory.txt"))
+  {
+    Serial.println("Archivo borrado!");
+  }
+}
+
+void printSPIIFFiles()
+{
+  Serial.println("Archivos en SPIFFS:");
+  File root = SPIFFS.open("/");
+  File file = root.openNextFile();
+  while (file)
+  {
+    Serial.println(file.name());
+    file = root.openNextFile();
+  }
+}
+
+
 
 #endif

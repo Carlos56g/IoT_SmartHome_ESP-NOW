@@ -1,21 +1,8 @@
 #include <Arduino.h>
-#include <Wire.h>            //Libreria para I2C
-#include <AHT20.h>           //Libreria para sensor Temperatura
-#include <Adafruit_BMP280.h> //Libreria para sensor Humedad
 
-#define SDA_PIN 21
-#define SCL_PIN 22
 #define fanC 17
 #define fanH 16
 #define peltier 32
-
-// Variables
-float desiredTemperature = 30;
-float temperatureInterval = 5;
-
-// Objetos de tipo sensor
-Adafruit_BMP280 myBMP; // Presion Atm
-AHT20 myAHT20;         // Temperatura y Humedad
 
 // Funciones
 void printTempSensorInfo(Adafruit_BMP280& BMP, AHT20& AHT20);
@@ -25,28 +12,6 @@ void controlTemperatureModule(float actualTemperature, char action);
 void setup()
 {
   Serial.begin(115200);
-
-  Wire.begin(SDA_PIN, SCL_PIN);
-
-  while (myAHT20.begin() != true)
-  {
-    Serial.println(F("No se ha conectado AHT20 o falló al cargar el coeficiente de calibración")); //(F()) guarda el string en la Flash para mantener la memoria dinámica libre
-    delay(5000);
-  }
-  Serial.println(F("AHT20 OK"));
-
-  if (!myBMP.begin())
-  {
-    Serial.println(F("No se encuentra un sensor BMP280 compatible, revisa la conexión"));
-    while (1);
-  }
-
-  /* Configuración default según el datasheet. */
-  myBMP.setSampling(Adafruit_BMP280::MODE_NORMAL,     /* Modo de Operación. */
-                    Adafruit_BMP280::SAMPLING_X2,     /* Temp. oversampling */
-                    Adafruit_BMP280::SAMPLING_X16,    /* Pressure oversampling */
-                    Adafruit_BMP280::FILTER_X16,      /* Filtrado. */
-                    Adafruit_BMP280::STANDBY_MS_500); /* Tiempo de Standby. */
 
   pinMode(fanC, OUTPUT); // Pin del motor 1 (Frio)
   pinMode(fanH, OUTPUT); // Pin del motor 2 (Caliente)

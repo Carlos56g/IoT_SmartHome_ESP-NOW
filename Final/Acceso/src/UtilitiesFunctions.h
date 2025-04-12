@@ -5,37 +5,51 @@
 #include <Arduino.h>
 #include "FunctionsEspNow.h"
 
-void printAccsDevice(const accsDevice &device)
-{
-  Serial.print("createKey: ");
-  Serial.println(device.createKey);
+void printAccsDevice(const accsDevice& device) {
+  Serial.println("----- accsDevice Info -----");
 
   Serial.print("Key: ");
-  for (int i = 0; i < 16; i++)
-  {
-    Serial.print(device.key[i]);
-  }
-  Serial.println();
+  Serial.println(device.key);
 
   Serial.print("Mode: ");
-  Serial.println(device.mode);
-
-  Serial.println("Keys:");
-  for (int i = 0; i < MAX_KEYS_NUM; i++)
-  {
-    Serial.print("Key ");
-    Serial.print(i);
-    Serial.print(": ");
-    for (int j = 0; j < 16; j++)
-    {
-      Serial.print(device.keys[i][j]);
-    }
-    Serial.println();
+  switch (device.mode) {
+    case AccsNFC: Serial.println("AccsNFC"); break;
+    case accsOpen: Serial.println("accsOpen"); break;
+    case accsClose: Serial.println("accsClose"); break;
+    case off: Serial.println("off"); break;
+    case on: Serial.println("on"); break;
+    case createKey: Serial.println("createKey"); break;
+    default: Serial.print("Unknown ("); Serial.print(device.mode); Serial.println(")"); break;
   }
 
   Serial.print("Status: ");
-  Serial.println(device.status);
+  switch (device.status) {
+    case accept: Serial.println("accept"); break;
+    case deny: Serial.println("deny"); break;
+    case waitingNewKey: Serial.println("waitingNewKey"); break;
+    case userRegistered: Serial.println("userRegistered"); break;
+    case accsOpen: Serial.println("accsOpen"); break;
+    case accsClose: Serial.println("accsClose"); break;
+    case on: Serial.println("on"); break;
+    case off: Serial.println("off"); break;
+
+    default: Serial.print("Unknown ("); Serial.print(device.status); Serial.println(")"); break;
+  }
+
+  Serial.print("Date: ");
+  Serial.println(device.date);
+
+  Serial.println("Stored Keys:");
+  for (int i = 0; i < MAX_KEYS_NUM; i++) {
+    if (device.keys[i][0] != '\0') { // Solo imprime si hay algo
+      Serial.print("  ["); Serial.print(i); Serial.print("] ");
+      Serial.println(device.keys[i]);
+    }
+  }
+
+  Serial.println("---------------------------");
 }
+
 
 void setDateServer(char *date, size_t size)
 {
@@ -140,10 +154,6 @@ bool deleteKeys()
   if (SPIFFS.remove("/Keys.txt"))
   {
     Serial.println("Llaves de acceso borradas!");
-    char prevMode=accsData.mode;
-    memset(&accsData, 0, sizeof(accsData));
-    accsData.mode=prevMode;
-    accsData.status=prevStatus;
     return true;
   }
   return false;
@@ -172,6 +182,7 @@ void saveKey(char *key)
   Serial.printf("\nKey: %s guardado en SPIFFS", keyStr.c_str());
   readKeys();
 }
+
 
 
 

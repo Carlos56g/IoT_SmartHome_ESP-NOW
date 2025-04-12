@@ -13,7 +13,6 @@
 accsDevice accsData;
 Servo servo0;                              // Objeto tipo Servo
 int servo0Proporties[3] = {32, 500, 2400}; // PIN, Min, Max
-char prevStatus;
 
 MFRC522::StatusCode status; // variable to get card status
 
@@ -33,7 +32,9 @@ bool accessWithNFC();
 bool writeKey(char *key);
 void saveKey(char *key);
 void readKeys();
-void controlAccess(accsDevice UserData);
+void controlAccess();
+
+char prevStatus=accsData.status;
 
 void setup()
 {
@@ -58,79 +59,96 @@ void setup()
 
 void loop()
 {
-  controlAccess(accsData);
+  controlAccess();
 }
 
-void controlAccess(accsDevice UserData)
+void controlAccess()
 {
   bool newAction = false;
-  if (UserData.createKey)
+  switch (accsData.mode)
   {
-    if (!writeKey(UserData.key))
+  case createKey:
+    if (accsData.status != waitingNewKey)
     {
-      Serial.printf("\nEsperando terjeta NFC para Grabar la Llave: %s", UserData.key);
+      accsData.status = waitingNewKey;
+      newAction = true;
+      break;
+    }
+    while (!writeKey(accsData.key))
+    {
+      Serial.printf("\nEsperando terjeta NFC para Grabar la Llave: %s", accsData.key);
       digitalWrite(statusLed, HIGH);
       delay(500);
       digitalWrite(statusLed, LOW);
       return;
-    };
-    saveKey(UserData.key);
+    }
+    saveKey(accsData.key);
     newAction = true;
-  }
-  else
-  {
-    if(accsData.status!='Y')
-      accsData.status = prevStatus;
-    switch (UserData.mode)
+    accsData.mode = AccsNFC;
+    break;
+  case AccsNFC:
+    accessWithNFC();
+    if (accsData.status != deny && accsData.status != accept) // AccessWithNFC changes the status
+      return;
+    newAction = true;
+    break;
+  case accsOpen:
+    if (prevStatus != accsOpen)
     {
-    case 'K':
-      accessWithNFC();
-      if (accsData.status != 'D' && accsData.status != 'A') // AccessWithNFC changes the status
-      {
-        return;
-      }
-      newAction = true;
-      break;
-    case 'O':
-      if (accsData.status != 'O')
-      {
-        servoMove(2000, 180, 0, servo0, servo0Proporties);
-        strncpy(accsData.key, "Accion del Host", sizeof(accsData.key));
-        accsData.status = 'O';
-        newAction = true;
-      }
-      break;
-    case 'C':
-      if (accsData.status != 'C')
-      {
-        servoMove(2000, -180, 180, servo0, servo0Proporties);
-        strncpy(accsData.key, "Accion del Host", sizeof(accsData.key));
-        accsData.status = 'C';
-        accsData.mode = 'K';
-        newAction = true;
-      }
-      break;
-    case 'N': // Apagado
-      if (accsData.status != 'N')
-      {
-        accsData.status = 'N';
-        strncpy(accsData.key, "Accion del Host", sizeof(accsData.key));
-        newAction = true;
-      }
-      break;
-    case 'E':
-      accsData.status = 'K';
+      servoMove(2000, 180, 0, servo0, servo0Proporties);
       strncpy(accsData.key, "Accion del Host", sizeof(accsData.key));
-      accsData.mode = 'K';
+      accsData.status = accsOpen;
       newAction = true;
-      break;
+    }
+    break;
+  case accsClose:
+    if (prevStatus != accsClose)
+    {
+      servoMove(2000, -180, 180, servo0, servo0Proporties);
+      strncpy(accsData.key, "Accion del Host", sizeof(accsData.key));
+      accsData.status = accsClose;
+      accsData.mode = AccsNFC;
+      newAction = true;
+    }
+    break;
+  case off:
+    if (prevStatus != off)
+    {
+      accsData.status = off;
+      strncpy(accsData.key, "Accion del Host", sizeof(accsData.key));
+      newAction = true;
+    }
+    break;
+  case on:
+    if (prevStatus != on)
+    {
+      accsData.status = on;
+      strncpy(accsData.key, "Accion del Host", sizeof(accsData.key));
+      accsData.mode = AccsNFC;
+      newAction = true;
+    }
+    break;
+  case deleteData:
+    if (prevStatus != deleteData)
+    {
+      accsData.status = deleteData;
+      strncpy(accsData.key, "Accion del Host", sizeof(accsData.key)); //
+      accsData.mode = AccsNFC;
+      unlockAccess(servo0, servo0Proporties);
+      newAction = true;
     }
   }
+
   if (newAction)
   {
-    printAccsDevice(UserData);
-    sendData('A', accsData);
-    prevStatus = accsData.status;
+    printAccsDevice(accsData);
+    sendData(sendActualData, accsData);
+
+    // Evita que haya un bucle despues de aceptar o denegar a alguien
+    if (accsData.status == deny || accsData.status == accept)
+      accsData.status = on;
+
+    prevStatus=accsData.status;
   }
 }
 
@@ -202,13 +220,13 @@ bool validateAccess(char *proposedKey)
   if (access)
   {
     Serial.println("\nACEPTADO");
-    accsData.status = 'A';
+    accsData.status = accept;
     getActualDate(accsData.date, sizeof(accsData.date));
     return true;
   }
 
   Serial.println("\nDENEGADO");
-  accsData.status = 'D';
+  accsData.status = deny;
   getActualDate(accsData.date, sizeof(accsData.date));
 
   digitalWrite(statusLed, HIGH);
@@ -232,7 +250,6 @@ void unlockAccess(Servo &servo, int servoProperties[3])
 
 bool accessWithNFC()
 {
-  accsData.status = 'J'; // Status Random que indica que se esta esperando acceso
   // Reset the loop if no new card present on the sensor/reader. This saves the entire process when idle.
   if (!mfrc522.PICC_IsNewCardPresent())
     return false;
@@ -296,10 +313,7 @@ bool writeKey(char *key)
   bool result = writeNFCData(uKey);
 
   if (result)
-  {
-    accsData.createKey = false;
-    accsData.status = 'R';
-  }
+    accsData.status = userRegistered;
 
   return result;
 }

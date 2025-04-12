@@ -5,37 +5,52 @@
 #include "FunctionsEspNow.h"
 #include <Arduino.h>
 
-void printAccsDevice(const accsDevice &device)
-{
-  Serial.print("createKey: ");
-  Serial.println(device.createKey);
+void printAccsDevice(const accsDevice& device) {
+  Serial.println("----- accsDevice Info -----");
 
   Serial.print("Key: ");
-  for (int i = 0; i < 16; i++)
-  {
-    Serial.print(device.key[i]);
-  }
-  Serial.println();
+  Serial.println(device.key);
 
   Serial.print("Mode: ");
-  Serial.println(device.mode);
-
-  Serial.println("Keys:");
-  for (int i = 0; i < MAX_KEYS_NUM; i++)
-  {
-    Serial.print("Key ");
-    Serial.print(i);
-    Serial.print(": ");
-    for (int j = 0; j < 16; j++)
-    {
-      Serial.print(device.keys[i][j]);
-    }
-    Serial.println();
+  switch (device.mode) {
+    case AccsNFC: Serial.println("AccsNFC"); break;
+    case accsOpen: Serial.println("accsOpen"); break;
+    case accsClose: Serial.println("accsClose"); break;
+    case off: Serial.println("off"); break;
+    case on: Serial.println("on"); break;
+    case createKey: Serial.println("createKey"); break;
+    default: Serial.print("Unknown ("); Serial.print(device.mode); Serial.println(")"); break;
   }
 
   Serial.print("Status: ");
-  Serial.println(device.status);
+  switch (device.status) {
+    case accept: Serial.println("accept"); break;
+    case deny: Serial.println("deny"); break;
+    case waitingNewKey: Serial.println("waitingNewKey"); break;
+    case userRegistered: Serial.println("userRegistered"); break;
+    case accsOpen: Serial.println("accsOpen"); break;
+    case accsClose: Serial.println("accsClose"); break;
+    case on: Serial.println("on"); break;
+    case off: Serial.println("off"); break;
+    case deleteData: Serial.println("deleteData"); break;
+    // Puedes agregar más si usas otros en status
+    default: Serial.print("Unknown ("); Serial.print(device.status); Serial.println(")"); break;
+  }
+
+  Serial.print("Date: ");
+  Serial.println(device.date);
+
+  Serial.println("Stored Keys:");
+  for (int i = 0; i < MAX_KEYS_NUM; i++) {
+    if (device.keys[i][0] != '\0') { // Solo imprime si hay algo
+      Serial.print("  ["); Serial.print(i); Serial.print("] ");
+      Serial.println(device.keys[i]);
+    }
+  }
+
+  Serial.println("---------------------------");
 }
+
 
 void printAccsHistory(std::list<accsEvent> accsHistory){
   accsEvent accsEvent;
@@ -79,58 +94,10 @@ void initializeData()
   receivedData.temperatureModule.mode = 'A';
 
   // Llenar el dispositivo de acceso
-  receivedData.accessModule.createKey = true;
   strcpy(receivedData.accessModule.key, "CarlosGarcia001"); // Llave de acceso
   receivedData.accessModule.mode = 'K';
 }
 
-void printAccsStatus(const accsDevice &device)
-{
-  switch (device.status)
-  {
-  case 'A':
-    Serial.println("\nEstado: Aceptado");
-    Serial.printf("Key: %s", device.key);
-    Serial.printf("\nFecha: %s", device.date);
-    break;
-  case 'D':
-    Serial.println("Estado: Denegado");
-    Serial.printf("Key: %s", device.key);
-    Serial.printf("\nFecha: %s", device.date);
-    break;
-  case 'R':
-    Serial.println("\nEstado: Usuario Registrado");
-    Serial.printf("Key: %s", device.key);
-    Serial.printf("\nFecha: %s", device.date);
-    break;
-  case 'W':
-    Serial.println("\nEstado: Esperando Registro");
-    Serial.printf("Key: %s", device.key);
-    Serial.printf("\nFecha: %s", device.date);
-    break;
-  case 'O':
-    Serial.println("\nEstado: Abierto");
-    Serial.printf("Key: %s", device.key);
-    Serial.printf("\nFecha: %s", device.date);
-    break;
-  case 'C':
-    Serial.println("\nEstado: Cerrado");
-    Serial.printf("Key: %s", device.key);
-    Serial.printf("\nFecha: %s", device.date);
-    break;
-  case 'N':
-    Serial.println("\nEstado: Deshabilitado");
-    Serial.printf("Key: %s", device.key);
-    Serial.printf("\nFecha: %s", device.date);
-    break;
-  case 'K':
-    Serial.println("\nEstado: Habilitado");
-    Serial.printf("Key: %s", device.key);
-    Serial.printf("\nFecha: %s", device.date);
-    break;
-  }
-  delay(1000);
-}
 
 void getDateServer(char *date, size_t size)
 {
@@ -215,7 +182,6 @@ void getActualDate(char *date, size_t size)
 
 void updateAccssData(JsonDocument doc)
 {
-  receivedData.accessModule.createKey = doc["createKey"];
 
   jsonCharParse(receivedData.accessModule.key, doc, "key");
 
@@ -281,11 +247,8 @@ void saveAccsHistory(accsEvent accsEvent)
     Serial.println("Error al abrir el archivo de AccsHistory");
     return;
   }
-  if(accsEvent.status=='J'){
-    file.close();
+  if(accsEvent.status==NULL)//Hay veces que el status se manda Nulo y trueba el archivo de historial
     return;
-  } //Evento que indica que se esta esperando acceso o denegado
-     //Por alguna extraña razon, esta variable se manda como null a veces, haciendo que truene el archivo
   
   file.print(accsEvent.key);
   file.print(',');

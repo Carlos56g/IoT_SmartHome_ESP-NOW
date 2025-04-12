@@ -24,13 +24,13 @@ void sendData(uint8_t peerID, espNowData data)
 {
 	switch (peerID)
 	{
-	case 1: // Temp
+	case tempModule:
 		esp_now_send(MACS[peerID], (uint8_t *)&data.temperatureModule, sizeof(tempDevice));
 		break;
-	case 2: // Luz
+	case lightModule:
 		esp_now_send(MACS[peerID], (uint8_t *)&data.lightModule, sizeof(lightDevice) * 4);
 		break;
-	case 3: // Accs
+	case accsModule:
 		esp_now_send(MACS[peerID], (uint8_t *)&data.accessModule, sizeof(accsDevice));
 		Serial.println(sizeof(data.accessModule));
 		break;
@@ -68,13 +68,12 @@ void onDataReceived(const uint8_t *mac, const uint8_t *data, int len)
 	Serial.printf("Bytes received: %d\n", len);
 
 	int senderID = searchSender(mac); // Busca el ID del emisor
-	// Crear un objeto de espNowData para almacenar los datos recibidos
 	
 	if(len==sizeof(char)){ //Primero validamos si no es una peticion de parte de un Modulo
-		char action=data[0];
-		switch (action)
+		char actionR=data[0];
+		switch (actionR)
 		{
-		case 'D': //Peticion para dar la fecha
+		case requestTime: //Peticion para dar la fecha
 			sendDate(senderID);
 			break;
 		
@@ -86,13 +85,13 @@ void onDataReceived(const uint8_t *mac, const uint8_t *data, int len)
 
 	switch (senderID) //Sino, copiamos los datos en la estructura del Host de acuerdo al origen
 	{
-	case 1: // Temp
+	case tempModule: // Temp
 		memcpy(&receivedData.temperatureModule, data, sizeof(tempDevice));
 		break;
-	case 2: // Luz
+	case lightModule: // Luz
 		memcpy(&receivedData.lightModule, data, sizeof(lightDevice));
 		break;
-	case 3: // Accs
+	case accsModule: // Accs
 		memcpy(&receivedData.accessModule, data, sizeof(accsDevice));	//Copiamos los datos recividos a la variable global
 		getActualDate(receivedData.accessModule.date,sizeof(receivedData.accessModule.date)); //Actualizamos la fecha de los datos
 		accsEvent accsHistoryData; //Creamos una nueva variable para almacenar el acceso recibido
@@ -101,6 +100,7 @@ void onDataReceived(const uint8_t *mac, const uint8_t *data, int len)
 		printAccsDevice(receivedData.accessModule);
 		accsHistoryData.status=receivedData.accessModule.status;
 		saveAccsHistory(accsHistoryData); //Lo guardamos en el almacenamiento interno del ESP32
+		
 		break;
 	default:
 		Serial.println("ID INVALIDO");
@@ -181,7 +181,7 @@ void static initEspNow()
 	}
 }
 
-void requestModule(int peerID,char action){						//ACCESO: D=Eliminar LLaves, R=Request Data
+void requestModule(int peerID, char action){						//ACCESO: K=Eliminar LLaves, D=Request Data
 	esp_now_send(MACS[peerID],(uint8_t *)&action, sizeof(char));
 }
 

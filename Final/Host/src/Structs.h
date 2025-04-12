@@ -4,6 +4,37 @@
 
 #include <list>
 
+enum ESPNowActions {
+  deleteData = 'A',
+  requestData = 'B',
+  requestTime = 'C',
+  sendActualData = 'M'
+}; 
+
+enum ModulesID {
+  tempModule = 1,
+  lightModule = 2,
+  accsModule = 3
+}; 
+
+enum accsModes {
+  AccsNFC = 'D',
+  accsOpen = 'E',
+  accsClose = 'F',
+  off = 'G',
+  on = 'H',
+  createKey = 'I'
+}; 
+
+enum accsStatus {
+  accept = 'J',
+  deny = 'K',
+  waitingNewKey = 'L',
+  userRegistered = 'N'
+  //Existen status iguales a los modos (on,off,accsOpen,accsClose y el DeleteKeys)
+}; 
+
+
 //Struct de los dispositivos de LUZ
 struct lightDevice
 {
@@ -34,19 +65,18 @@ struct tempDevice
 //Struct del modulo  de Acceso
 struct accsDevice
 {
-  bool createKey=false;           // True=Pone al modulo en modo de creacion de llave de acceso
-  char key[16];             // Almacena la llave de acceso
-  char mode='K';                // O=Abrir Puerta,  C=Cerrar Puerta, N=Deshabilitado, K=Activar con Llave de acceso
+  char key[16];                        //Almacena la llave de acceso
+  char mode=AccsNFC;                   //Contiene el Modo
   char keys[MAX_KEYS_NUM][16];         //Contiene todas las llaves de Acceso Almacenadas, 100 Keys de 16 Caracteres
-  char status='K';              //Contiene el Status A=Aceptado, D=Denegado, R=Usuario Registrado, W=Esperando Registro , Y=Llaves eliminadas, 
-  char date[20];            //Almacena la fecha de Acceso
+  char status=on;                      //Contiene el Status 
+  char date[20];                       //Almacena la fecha de Acceso
 };
 
 //Struct para un Acceso
 struct accsEvent
 {
   char key[16];             // Almacena la llave de acceso
-  char status;              //Contiene el Status A=Aceptado, D=Denegado, R=Usuario Registrado
+  char status;              //Contiene el Status
   char date[20];            //Almacena la fecha de Acceso
 };
 
@@ -58,6 +88,7 @@ struct espNowData {
   tempDevice temperatureModule;        //Datos del modulo de temperatura
   accsDevice accessModule;        //Datos del modulo de acceso
 };
+
 
 extern espNowData receivedData;
 extern std::list<accsEvent> accsHistory; //Lista global dinamica

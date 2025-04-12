@@ -1,11 +1,20 @@
 const accsData = {
-    createKey: false,
     key: "",
     mode: "",
     keys: [],
     status: "",
     date: ""
 };
+
+const accsModes = {
+    AccsNFC: 'D',
+    accsOpen:'E',
+    accsClose: 'F',
+    off:'G',
+    on:'H',
+    createKey:'I'
+};
+
 
 function toggleAutoModeTemp() {
     const checkbox = document.getElementById("toggleAutoMode");
@@ -50,10 +59,9 @@ function OnOffAccs() {
 }
 
 function accsOff() {
-    accsData.createKey = false;
-    accsData.mode = "N";
+    accsData.mode = accsModes.off;
     // Enviar la petición GET con un header personalizado
-    fetch("http://192.168.31.191/api/Accs/OnOff", {
+    fetch("http://192.168.31.191/api/Accs/Mode", {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
@@ -66,10 +74,9 @@ function accsOff() {
 }
 
 function accsOn() {
-    accsData.createKey = false;
-    accsData.mode = "E";
+    accsData.mode = accsModes.on;
     // Enviar la petición GET con un header personalizado
-    fetch("http://192.168.31.191/api/Accs/OnOff", {
+    fetch("http://192.168.31.191/api/Accs/Mode", {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
@@ -83,11 +90,10 @@ function accsOn() {
 }
 
 function accsCreateKey() {
-    accsData.createKey = true;
-    accsData.mode = "K";
+    accsData.mode = accsModes.createKey;
     accsData.key = document.getElementById("accsKeyInput").value;
     // Enviar la petición GET con un header personalizado
-    fetch("http://192.168.31.191/api/Accs/CreateKey", {
+    fetch("http://192.168.31.191/api/Accs/Mode", {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
@@ -100,9 +106,8 @@ function accsCreateKey() {
 }
 
 function accsOpen() {
-    accsData.createKey = false;
-    accsData.mode = "O";
-    fetch("http://192.168.31.191/api/Accs/OpenClose", {
+    accsData.mode = accsModes.accsOpen;
+    fetch("http://192.168.31.191/api/Accs/Mode", {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
@@ -116,9 +121,8 @@ function accsOpen() {
 }
 
 function accsClose() {
-    accsData.createKey = false;
-    accsData.mode = "C";
-    fetch("http://192.168.31.191/api/Accs/OpenClose", {
+    accsData.mode = accsModes.accsClose;
+    fetch("http://192.168.31.191/api/Accs/Mode", {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
@@ -129,24 +133,6 @@ function accsClose() {
         .then(data => console.log(data))
         .catch(error => console.error('Error:', error));
     console.log("Cerrando Acceso");
-}
-
-
-function createLightInterface() {
-    fetch("http://192.168.31.191/getLights") //Metodo Get que obtiene la informacion de luces del modulo
-        .then(response => response.json()) //La respuesta la convierte en JSON
-        .then(data => {
-            const lightsInterface = document.getElementById("lightsInterface");
-            lightsInterface.innerHTML = '';
-
-            data.forEach(element => {
-                const individualLight = document.createElement("div");
-                div.textContent = element;
-                lightsInterface.appendChild(individualLight);
-            });
-        })
-
-        .catch(error => console.log('Error al obtener datos:', error));
 }
 
 
@@ -194,22 +180,6 @@ function deleteAccsHistory() {
       alert("Hubo un problema al eliminar el historial.");
     });
   }
-
-
-function deleteAccsHistory() {
-  fetch('/api/Accs/History/delete', {
-    method: 'GET',  // Usamos el método GET para llamar al servidor
-  })
-  .then(response => response.text())  // Respuesta en formato de texto
-  .then(data => {
-    console.log("Respuesta del servidor:", data);
-    alert(data);  // Muestra la respuesta, en este caso "Historial eliminado!"
-  })
-  .catch(error => {
-    console.error("Error al eliminar el historial:", error);
-    alert("Hubo un problema al eliminar el historial.");
-  });
-}
 
 function deleteAccsKeys() {
     fetch('/api/Accs/Keys/delete', {

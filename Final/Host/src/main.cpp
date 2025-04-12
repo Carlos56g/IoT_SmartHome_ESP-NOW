@@ -39,7 +39,7 @@ void setup()
     request->send(SPIFFS, "/accsKeys.html", "text/html"); });
 
     Server.on("/api/Accs/Keys/get", HTTP_GET, [](AsyncWebServerRequest *request) {
-      requestModule(3,'R');
+      requestModule(accsModule,requestData);
       JsonDocument doc;
       JsonArray arr = doc.to<JsonArray>();
       for (int i = 0; i < MAX_KEYS_NUM; i++) {
@@ -78,7 +78,7 @@ void setup()
 
   Server.on("/api/Accs/Keys/delete", HTTP_GET, [](AsyncWebServerRequest *request)
             {
-    requestModule(3,'D');
+    requestModule(accsModule,deleteData);
     request->send(200, "text/plain", "Todas las Keys Eliminadas!"); });
 
   // Archivos estáticos
@@ -95,7 +95,7 @@ void setup()
 
   /////////////////////////////////////// ACCESO
   // Metodo para Crear un Nuevo Registro
-  Server.on("/api/Accs/CreateKey", HTTP_POST, [](AsyncWebServerRequest *request) {}, NULL, [](AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total)
+  Server.on("/api/Accs/Mode", HTTP_POST, [](AsyncWebServerRequest *request) {}, NULL, [](AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total)
             {
                 String body = String((char*)data).substring(0, len);
 
@@ -115,62 +115,14 @@ void setup()
             
                 // Asignar los valores del JSON al struct, haciendo la conversión de char a unsigned char
                 updateAccssData(doc);
-                sendData(3, receivedData);
-                receivedData.accessModule.status='W';
+                sendData(accsModule, receivedData);
                   request->send(200, "application/json", "{\"status\":\"ok\"}");
                  });
-  Server.on("/api/Accs/OpenClose", HTTP_POST, [](AsyncWebServerRequest *request) {}, NULL, [](AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total)
-            {
-                String body = String((char*)data).substring(0, len);
 
-                Serial.println("📩 Body recibido:");
-                Serial.println(body);
-
-                JsonDocument doc; // Usar JsonDocument
-
-                // Deserializar el JSON recibido
-                DeserializationError error = deserializeJson(doc, body);
-            
-                if (error) {
-                  Serial.println("Error al deserializar el JSON");
-                  request->send(400, "application/json", "{\"error\":\"Bad JSON\"}");
-                  return;
-                }
-            
-                // Asignar los valores del JSON al struct, haciendo la conversión de char a unsigned char
-
-                updateAccssData(doc);
-                sendData(3, receivedData);
-
-                request->send(200, "application/json", "{\"status\":\"ok\"}"); });
-
-  Server.on("/api/Accs/OnOff", HTTP_POST, [](AsyncWebServerRequest *request) {}, NULL, [](AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total)
-            {
-                String body = String((char*)data).substring(0, len);
-
-                Serial.println("📩 Body recibido:");
-                Serial.println(body);
-
-                JsonDocument doc; // Usar JsonDocument
-
-                // Deserializar el JSON recibido
-                DeserializationError error = deserializeJson(doc, body);
-            
-                if (error) {
-                  Serial.println("Error al deserializar el JSON");
-                  request->send(400, "application/json", "{\"error\":\"Bad JSON\"}");
-                  return;
-                }
-            
-                updateAccssData(doc);
-                sendData(3, receivedData);
-
-                request->send(200, "application/json", "{\"status\":\"ok\"}"); });
   Server.begin();
 }
 
 void loop()
 {
-  // ACCESO
-  printAccsStatus(receivedData.accessModule);
+
 }

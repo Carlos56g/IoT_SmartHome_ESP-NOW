@@ -1,92 +1,202 @@
 #include <Arduino.h>
+#include <Wire.h>            //Libreria para I2C
+#include <AHT20.h>           //Libreria para sensor Temperatura
+#include <Adafruit_BMP280.h> //Libreria para sensor Humedad
+#include "FunctionsEspNow.h"
+#include "UtilitiesFunctions.h"
 
+#define SDA_PIN 21
+#define SCL_PIN 22
 #define fanC 17
 #define fanH 16
 #define peltier 32
+float temperatureMargin = 3; // Intervalo de Temperatura, no modificable por el usuario
+char prevStatus;
+
+// Objetos de tipo sensor
+Adafruit_BMP280 myBMP; // Presion Atm
+AHT20 myAHT20;         // Temperatura y Humedad
+tempDevice tempData;
 
 // Funciones
-void printTempSensorInfo(Adafruit_BMP280& BMP, AHT20& AHT20);
-char validateDesiredTemperature(float actualTemperature, float desiredTemperature);
-void controlTemperatureModule(float actualTemperature, char action);
+char validateDesiredTemperature();
+void controlTemperatureModule();
+void printTempSensorInfo(Adafruit_BMP280 &BMP, AHT20 &AHT20);
+void controlTempDevice(char action);
+void initPins();
+void initAHT20();
+void controlTempProgram();
 
 void setup()
 {
   Serial.begin(115200);
+  initAHT20();
+  InitEspNow();
+  initPins();
+}
 
-  pinMode(fanC, OUTPUT); // Pin del motor 1 (Frio)
-  pinMode(fanH, OUTPUT); // Pin del motor 2 (Caliente)
-  pinMode(peltier, OUTPUT);    // Pin del relevador de la Peltier
+void loop()
+{
+  controlTempProgram();
+  printTempDevice(tempData);
+  delay(1000);
+}
+
+char validateDesiredTemperature()
+{
+  // Funcion que valida la temperatura
+  if (tempData.actualTemperature >= (tempData.desiredTemperature - (temperatureMargin / 2)) && tempData.actualTemperature <= (tempData.desiredTemperature + (temperatureMargin / 2)))
+    return nothing; // No hacer nada
+  if (tempData.actualTemperature > tempData.desiredTemperature + (temperatureMargin / 2))
+    return cold; // Encender para frio
+  if (tempData.actualTemperature < tempData.desiredTemperature - (temperatureMargin / 2))
+    return hot; // Encender para calor
+}
+
+void controlTemperatureModule()
+{
+  if (tempData.status != off)
+  {
+    switch (tempData.mode)
+    {
+    case off:
+      controlTempDevice(off);
+      break;
+
+    case air:
+      controlTempDevice(air);
+      break;
+
+    case hot:
+      controlTempDevice(hot);
+      break;
+
+    case cold:
+      controlTempDevice(cold);
+      break;
+
+    case autoMode:
+      tempData.actualTemperature = myAHT20.getTemperature();
+      tempData.actualHumidity = myAHT20.getHumidity();
+      controlTempDevice(validateDesiredTemperature());
+      break;
+    }
+  }
+  else
+    controlTempDevice(off);
+}
+
+void initAHT20()
+{
+  // Objetos de tipo sensor
+  Adafruit_BMP280 myBMP; // Presion Atm
+  AHT20 myAHT20;         // Temperatura y Humedad
+  Wire.begin(SDA_PIN, SCL_PIN);
+  while (myAHT20.begin() != true)
+  {
+    Serial.println(F("No se ha conectado AHT20 o falló al cargar el coeficiente de calibración")); //(F()) guarda el string en la Flash para mantener la memoria dinámica libre
+    delay(5000);
+  }
+  Serial.println(F("AHT20 OK"));
+
+  if (!myBMP.begin())
+  {
+    Serial.println(F("No se encuentra un sensor BMP280 compatible, revisa la conexión"));
+    while (1)
+      ;
+  }
+
+  /* Configuración default según el datasheet. */
+  myBMP.setSampling(Adafruit_BMP280::MODE_NORMAL,     /* Modo de Operación. */
+                    Adafruit_BMP280::SAMPLING_X2,     /* Temp. oversampling */
+                    Adafruit_BMP280::SAMPLING_X16,    /* Pressure oversampling */
+                    Adafruit_BMP280::FILTER_X16,      /* Filtrado. */
+                    Adafruit_BMP280::STANDBY_MS_500); /* Tiempo de Standby. */
+}
+
+void initPins()
+{
+  pinMode(fanC, OUTPUT);    // Pin del motor 1 (Frio)
+  pinMode(fanH, OUTPUT);    // Pin del motor 2 (Caliente)
+  pinMode(peltier, OUTPUT); // Pin del relevador de la Peltier
   digitalWrite(fanC, LOW);
   digitalWrite(fanH, LOW);
   digitalWrite(peltier, HIGH);
 }
 
-void loop()
+void controlTempDevice(char mode)
 {
-  printTempSensorInfo(myBMP, myAHT20);
-  float actualTemperature = myAHT20.getTemperature();
-  controlTemperatureModule(actualTemperature,'A');
-  yield();
-
-}
-
-void printTempSensorInfo(Adafruit_BMP280& BMP, AHT20& AHT20)
-{
-  // Funcion que imprime la informacion del sensor
-  float temperature = AHT20.getTemperature();
-  float humidity = AHT20.getHumidity();
-  float pressure = BMP.readPressure();
-  Serial.print("Temperatura: ");
-  Serial.print(temperature, 2);
-  Serial.print("°C\t");
-  Serial.print("Humedad: ");
-  Serial.print(humidity, 2);
-  Serial.print("% RH\t");
-  Serial.print("Presion: ");
-  Serial.print(pressure, 2);
-  Serial.println("Pa");
-  Serial.println();
-}
-
-char validateDesiredTemperature(float actualTemperature, float desiredTemperature, float interval)
-{
-  // Funcion que valida la temperatura
-  if (actualTemperature >= (desiredTemperature - (interval / 2)) && actualTemperature <= (desiredTemperature + (interval / 2)))
-    return 'N'; // No hacer nada (Nothing/None)
-  if (actualTemperature > desiredTemperature + (interval / 2))
-    return 'C'; // Encender para frio (Cold)
-  if (actualTemperature < desiredTemperature - (interval / 2))
-    return 'H'; // Encender para calor (Hot)
-  return 'I';
-}
-
-void controlTemperatureModule(float actualTemperature, char action)
-{
-  if (action == 'A') // Por defecto entra en modo automatico
-    action = validateDesiredTemperature(actualTemperature, desiredTemperature, temperatureInterval);
-  Serial.print(action);
-  switch (action)
+  switch (mode)
   {
-  case 'N':
+  case nothing:
     digitalWrite(fanC, LOW);
     digitalWrite(fanH, LOW);
     digitalWrite(peltier, HIGH);
     break;
 
-  case 'C':
+  case cold:
     digitalWrite(fanC, HIGH);
     digitalWrite(fanH, LOW);
     digitalWrite(peltier, LOW);
     break;
 
-  case 'H':
+  case hot:
     digitalWrite(fanC, LOW);
     digitalWrite(fanH, HIGH);
     digitalWrite(peltier, LOW);
     break;
 
-  default:
-      Serial.print("Not valid Action");
+  case air:
+    digitalWrite(fanH, HIGH);
+    digitalWrite(fanC, HIGH);
+    digitalWrite(peltier, HIGH);
+    break;
+
+  case off:
+    digitalWrite(fanC, LOW);
+    digitalWrite(fanH, LOW);
+    digitalWrite(peltier, HIGH);
+    tempData.status=off;
     break;
   }
+}
+
+void controlTempProgram(){
+  struct tm actualTime; 
+
+  if(strlen(tempData.tempDataProg.onDate) > 0)//Encendido Automatico
+  {
+    while (!getLocalTime(&actualTime)) { //Obtenemos la fecha actual
+      sendData(requestTime,tempData);
+    };
+
+    tm tmOnDate = convertStringToTm(tempData.tempDataProg.onDate);
+    //Si el tiempo de encendido es menor al tiempo actual, significa que debe de encenderse
+    if(mktime(&tmOnDate)<mktime(&actualTime)){
+      tempData.mode=tempData.tempDataProg.mode;
+      tempData.desiredTemperature=tempData.tempDataProg.desiredTemperature;
+      tempData.status=on;
+    }
+  }
+
+  if(strlen(tempData.tempDataProg.offDate) > 0){
+    while (!getLocalTime(&actualTime)) { //Obtenemos la fecha actual
+      sendData(requestTime,tempData);
+      };
+
+      tm tmOffDate = convertStringToTm(tempData.tempDataProg.offDate);
+      //Si el tiempo de apagado es menor al tiempo actual, significa que debe de apagarse
+      if(mktime(&tmOffDate)<mktime(&actualTime)){
+        tempData.status=off;
+        strcpy(tempData.tempDataProg.offDate, ""); // Ensure offDate is a modifiable character array
+        strcpy(tempData.tempDataProg.onDate, "");
+      }
+    }
+
+  char buffer[25];
+  strftime(buffer, sizeof(buffer), "%Y-%m-%dT%H:%M:%S", &actualTime);
+  Serial.println("Fecha Actual:");
+  Serial.println(buffer);
+
+  controlTemperatureModule();
 }

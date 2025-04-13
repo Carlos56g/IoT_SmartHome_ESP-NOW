@@ -7,35 +7,45 @@
 #include <Wire.h>            //Libreria para I2C
 #include <AHT20.h>           //Libreria para sensor Temperatura
 #include <Adafruit_BMP280.h> //Libreria para sensor Humedad
+
 #define SDA_PIN 21
 #define SCL_PIN 22
 
-void printTempDevice(const tempDevice &device) {
-  Serial.println("------------ Device Info ------------");
-  Serial.print("Desired Temperature: ");
-  Serial.println(device.desiredTemperature);
-  
-  Serial.print("Temperature Margin: ");
-  Serial.println(device.temperatureMargin);
-  
-  Serial.print("Actual Temperature: ");
-  Serial.println(device.actualTemperature);
-  
-  Serial.print("Actual Humidity: ");
-  Serial.println(device.actualHumidity);
-  
-  Serial.print("Actual Pressure: ");
-  Serial.println(device.actualPressure);
-  
-  Serial.print("Mode: ");
+void printTempDevice(const tempDevice& device) {
+  Serial.println("===== tempDevice Info =====");
+
+  Serial.print("Modo: ");
   Serial.println(device.mode);
+
+  Serial.print("Estado: ");
+  Serial.println(device.status);
+
+  Serial.print("Temperatura deseada: ");
+  Serial.println(device.desiredTemperature);
+
+  Serial.print("Temperatura actual: ");
+  Serial.println(device.actualTemperature);
+
+  Serial.print("Humedad actual: ");
+  Serial.println(device.actualHumidity);
+
+  Serial.println("---- Programación ----");
+
+  Serial.print("Modo programado: ");
+  Serial.println(device.tempDataProg.mode);
+
+  Serial.print("Fecha encendido: ");
+  Serial.println(device.tempDataProg.onDate);
+
+  Serial.print("Fecha apagado: ");
+  Serial.println(device.tempDataProg.offDate);
+
+  Serial.print("Temperatura programada: ");
+  Serial.println(device.tempDataProg.desiredTemperature);
+
   
-  Serial.print("On Date: ");
-  Serial.println(device.onDate);
-  
-  Serial.print("Off Date: ");
-  Serial.println(device.offDate);
-  Serial.println("-----------------------------------");
+
+  Serial.println("=========================");
 }
 
 
@@ -72,30 +82,18 @@ void setDateString(char *date)
   Serial.println(date);
 }
 
-void initAHT20(){
-  // Objetos de tipo sensor
-  Adafruit_BMP280 myBMP; // Presion Atm
-  AHT20 myAHT20;         // Temperatura y Humedad
-  Wire.begin(SDA_PIN, SCL_PIN);
-  while (myAHT20.begin() != true)
-  {
-    Serial.println(F("No se ha conectado AHT20 o falló al cargar el coeficiente de calibración")); //(F()) guarda el string en la Flash para mantener la memoria dinámica libre
-    delay(5000);
-  }
-  Serial.println(F("AHT20 OK"));
+tm convertStringToTm(char* date){
+  tm timeInfo;
+  memset(&timeInfo, 0, sizeof(timeInfo));
 
-  if (!myBMP.begin())
-  {
-    Serial.println(F("No se encuentra un sensor BMP280 compatible, revisa la conexión"));
-    while (1);
-  }
+  sscanf(date, "%d-%d-%dT%d:%d:%d",
+    &timeInfo.tm_year, &timeInfo.tm_mon, &timeInfo.tm_mday,
+    &timeInfo.tm_hour, &timeInfo.tm_min, &timeInfo.tm_sec);
+    
+    timeInfo.tm_year -= 1900; // tm_year = años desde 1900
+    timeInfo.tm_mon -= 1;     // tm_mon es 0-11
 
-  /* Configuración default según el datasheet. */
-  myBMP.setSampling(Adafruit_BMP280::MODE_NORMAL,     /* Modo de Operación. */
-                    Adafruit_BMP280::SAMPLING_X2,     /* Temp. oversampling */
-                    Adafruit_BMP280::SAMPLING_X16,    /* Pressure oversampling */
-                    Adafruit_BMP280::FILTER_X16,      /* Filtrado. */
-                    Adafruit_BMP280::STANDBY_MS_500); /* Tiempo de Standby. */
+    return timeInfo;
 }
 
 

@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="UTF-8">
+  <title>Programar Encendido Modulo de Temperatura</title>
+  <link rel="stylesheet" href="/style.css">
+</head>
+
+<body onload="getTempData()">
+  <h2 style="text-align:center;">Programar Encendido del Modulo de Temperatura</h2>
+
+  <h2>Modo: </h2>
+  <select name="select" id="tempProgModeSelect">
+    <option value="O">Automatico</option>
+    <option value="P" selected>Caliente</option>
+    <option value="Q">Frio</option>
+    <option value="R">Solo Aire</option>
+  </select>
+
+  <h2>Temperatura Deseada: </h2>
+  <input type="number"
+    id="desiredProgTemperatureInput"><!--Se Supone que se debe de desactivar si el modo es diferente a automatico-->
+
+  <h2>Fecha </h2>
+  <label for="inicio">Encendido:</label>
+  <input type="datetime-local" id="onTempDate" name="inicio">
+  <br><br>
+  <label for="fin">Apagado:</label>
+  <input type="datetime-local" id="offTempDate" name="fin">
+
+  <br><br>
+  <button id="saveProg" onclick="saveTempProg()">Guardar Programacion</button>
+
+
+  <script src="/script.js"></script>
+</body>
+
+</html>

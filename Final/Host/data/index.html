@@ -1,53 +1,73 @@
 <!DOCTYPE html>
 <html>
+
 <head>
   <meta charset="UTF-8">
   <title>Smart Home</title>
   <link rel="stylesheet" href="style.css">
 </head>
+
 <body>
-  <h1>Informacion de los Modulos:</h1>
+  <div id="Temp">
+    <h1>Temperatura</h1>
 
-  <h2>Temperatura:</h2>
-  <label>
-    <input type="checkbox" id="toggleAutoMode" onchange="toggleAutoModeTemp()" checked> Modo Automatico
-  </label>
-  <br><br>
-  <p>Temperatura Deseada</p>
-  <input type="number" id="tempAutoInput" onchange="updateTemperature(this.value, 'A')">
-  <br><br>
-  <button id="tempHotButton" onclick="UpdateTemperature(0,'H')">Encender Calefaccion</button>
-  <button id="tempColdButton" onclick="UpdateTemperature(0,'C')">Encender Aire Acondicionado</button>
+    <label>
+      <input type="checkbox" id="toggleStateTemp" checked onchange="OnOffTemp()"> Encender Modulo de Temperatura
+    </label>
 
-  <h2>Luz:</h2>
-  <div id="lightsInterface">
-    
+    <h2>Temperatura Actual: </h2> <div id="actualTemp"></div> 
+
+    <h2>Humedad Actual: </h2> <div id="actualHum"></div> 
+
+    <h2>Modo actual: </h2>
+    <select name="select" id="tempModeSelect" onchange="updateTempData()"> <!--Se Supone que se debe de desactivar si se desactiva la checkbox-->
+      <option value="O">Automatico</option>
+      <option value="P" selected>Caliente</option>
+      <option value="Q">Frio</option>
+      <option value="R">Solo Aire</option>
+    </select>
+
+    <h2>Temperatura Deseada: </h2>
+    <input type="number" id="desiredTemperatureInput" onchange="updateTempData()"> <!--Se Supone que se debe de desactivar si el modo es diferente a automatico-->
+
+    <br><br>
+    <a href="/Temp/Prog">
+      <button id="goToProgTemp">Programar Encendido</button>
+    </a>
+
   </div>
 
+  <div>
+    <h2>Luz:</h2>
 
-  <h2>Acceso:</h2>
-  <label>
-    <input type="checkbox" id="toggleSatateAccs" checked onchange="OnOffAccs()"> Encender Modulo de Acceso
-  </label>
-  <label>
-    <input type="checkbox" id="toggleCreateKey" onchange="toggleCreateKeyAccs()" checked> Crear LLave
-  </label>
-  <br><br>
-  <input type="text" maxlength="15" id="accsKeyInput">
-  <br><br>
-  <button id="accsKeyButton" onclick="accsCreateKey()">Crear Llave!</button>
-  <br><br>
-  <button id="accsOpenButton" onclick="accsOpen()">Abir Acceso</button>
-  <button id="accsCloseButton" onclick="accsClose()">Cerrar Acceso</button>
+  </div>
 
-  <a href="/Accs/History">
-    <button>Ver Historial</button>
-  </a>
+  <div id="Accs">
+    <h2>Acceso:</h2>
+    <label>
+      <input type="checkbox" id="toggleSatateAccs" checked onchange="OnOffAccs()"> Encender Modulo de Acceso
+    </label>
+    <label>
+      <input type="checkbox" id="toggleCreateKey" onchange="toggleCreateKeyAccs()" checked> Crear LLave
+    </label>
+    <br><br>
+    <input type="text" maxlength="15" id="accsKeyInput">
+    <br><br>
+    <button id="accsKeyButton" onclick="accsCreateKey()">Crear Llave!</button>
+    <br><br>
+    <button id="accsOpenButton" onclick="accsOpen()">Abir Acceso</button>
+    <button id="accsCloseButton" onclick="accsClose()">Cerrar Acceso</button>
 
-  <a href="/Accs/Keys">
-    <button>Administrar llaves</button>
-  </a>
+    <a href="/Accs/History">
+      <button id="goToHistoryBtn">Ver Historial</button>
+    </a>
+
+    <a href="/Accs/Keys">
+      <button id="goToKeysBtn">Administrar llaves</button>
+    </a>
+  </div>
 
   <script src="script.js"></script>
 </body>
+
 </html>

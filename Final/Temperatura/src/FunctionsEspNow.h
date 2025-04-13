@@ -16,15 +16,15 @@ void onDataSent(const uint8_t *mac_addr, esp_now_send_status_t status)
 	Serial.println(status == ESP_NOW_SEND_SUCCESS ? "Delivery Success" : "Delivery Fail");
 }
 
-// Envia un Mensaje al HOST con la accion especificada
+// Envia un Mensaje por medio de ESP-NOW al Host con la accion Especificada
 void sendData(char action, tempDevice data)
 {
 	switch (action)
 	{
-	case 'D': // Data
-		esp_now_send(MACS[0], (uint8_t *)&data, sizeof(accsDevice));
+	case sendActualData: // Data
+		esp_now_send(MACS[0], (uint8_t *)&data, sizeof(tempDevice));
 		break;
-	case 'T': // Peticion para obtner la fecha del Host
+	case requestTime: // Peticion para obtner la fecha del Host
 		esp_now_send(MACS[0], (uint8_t *)&action, sizeof(char));
 		break;
 	default:
@@ -65,27 +65,29 @@ void onDataReceived(const uint8_t *mac, const uint8_t *data, int len)
 
 	if (senderID == 0)
 	{
-		if (len == sizeof(char))
+		if (len == sizeof(char)) //Simpre que sea de tipo accion, despues de modificar los datos, se le mandara al Host de Vuelta
 		{
 			char action = data[0];
 			switch (action)
 			{
-			case 'D': // Eliminar llaves
-				deleteKeys();
-				strncpy(accsData.key, "Accion del Host", sizeof(accsData.key));
-				accsData.status = 'Y';
-				sendData('A',accsData);
+			case deleteData: // Eliminar toda la informacion del Struct y los archivos internos
+				memset(&tempData, 0, sizeof(tempDevice)); //Borra todo el struct
+				tempData.mode=deleteData;
 				break;
-			case 'R': // Request Data
-				sendData('A', accsData);
+
+			case requestData: // Request Data
+				sendData(sendActualData, tempData); //Mandamos los Datos de Vuelta
 				break;
+
+			default:
+				return; //Accion Invalida para el Modulo de Acceso!
+			break;
 			}
 		}
 		// SOLO PUEDE RECIBIR DEL HOST
-		else if (len == sizeof(accsDevice))
+		else if (len == sizeof(tempDevice))
 		{
-			accsDevice tempData;
-			memcpy(&accsData, data, sizeof(accsDevice));
+			memcpy(&tempData, data, sizeof(tempDevice));
 		}
 		else if (len == sizeof(char[20])) // Si tiene
 		{
@@ -137,7 +139,7 @@ void getActualDate(char *date, size_t size)
 	while (!getLocalTime(&timeInfo))
 	{
 		Serial.println("Error al obtener la hora");
-		sendData('D', accsData);
+		sendData(requestTime, tempData); //Mandamos una peticion al Host para que nos de la fecha Actual
 		delay(1000);
 		if (tries > 10)
 		{

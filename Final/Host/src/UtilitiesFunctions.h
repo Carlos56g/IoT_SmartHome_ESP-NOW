@@ -87,10 +87,8 @@ void initializeData()
 
   // Llenar el dispositivo de temperatura
   receivedData.temperatureModule.desiredTemperature = 22.5;
-  receivedData.temperatureModule.temperatureInterval = 2.0;
   receivedData.temperatureModule.actualTemperature = 21.0;
   receivedData.temperatureModule.actualHumidity = 50.0;
-  receivedData.temperatureModule.actualPressure = 1015;
   receivedData.temperatureModule.mode = 'A';
 
   // Llenar el dispositivo de acceso
@@ -187,9 +185,48 @@ void updateAccssData(JsonDocument doc)
 
   receivedData.accessModule.mode = ((const char *)doc["mode"])[0];
 
-  receivedData.accessModule.status = ((const char *)doc["status"])[0];
-
   getActualDate(receivedData.accessModule.date, sizeof(receivedData.accessModule.date));
+}
+
+void updateTempData(JsonDocument doc)
+{
+  receivedData.temperatureModule.status = ((const char *)doc["status"])[0];
+
+  receivedData.temperatureModule.mode = ((const char *)doc["mode"])[0];
+
+  receivedData.temperatureModule.desiredTemperature = doc["desiredTemperature"];
+}
+
+void updateTempProgData(JsonDocument doc)
+{
+  strncpy(receivedData.temperatureModule.tempDataProg.onDate, doc["tempDataProg"]["onDate"], 20);
+
+  strncpy(receivedData.temperatureModule.tempDataProg.offDate, doc["tempDataProg"]["offDate"], 20);
+
+  receivedData.temperatureModule.tempDataProg.desiredTemperature = doc["tempDataProg"]["desiredTemperature"];
+
+  receivedData.temperatureModule.tempDataProg.mode = ((const char *) doc["tempDataProg"]["mode"])[0];
+}
+
+JsonDocument updateDoc(char module, JsonDocument doc){
+  switch (module)
+  {
+  case tempModule:
+    doc["actualTemperature"]=receivedData.temperatureModule.actualTemperature;
+    doc["actualHumidity"]=receivedData.temperatureModule.actualHumidity;
+    doc["desiredTemperature"]=receivedData.temperatureModule.desiredTemperature;
+    doc["mode"]=(signed char)receivedData.temperatureModule.mode;
+    doc["tempDataProg"]["mode"]=(signed char)receivedData.temperatureModule.tempDataProg.mode;
+    doc["tempDataProg"]["onDate"]=receivedData.temperatureModule.tempDataProg.onDate;
+    doc["tempDataProg"]["offDate"]=receivedData.temperatureModule.tempDataProg.offDate;
+    doc["tempDataProg"]["desiredTemperature"]=receivedData.temperatureModule.tempDataProg.desiredTemperature;
+
+    break;
+  
+  default:
+    break;
+  }
+  return doc;
 }
 
 void readAccsHistory()

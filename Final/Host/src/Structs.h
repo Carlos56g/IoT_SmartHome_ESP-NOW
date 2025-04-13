@@ -34,6 +34,14 @@ enum accsStatus {
   //Existen status iguales a los modos (on,off,accsOpen,accsClose y el DeleteKeys)
 }; 
 
+enum tempModes{
+  autoMode = 'O',
+  hot = 'P',
+  cold = 'Q',
+  nothing = 'S',
+  air = 'R',
+};
+
 
 //Struct de los dispositivos de LUZ
 struct lightDevice
@@ -50,17 +58,23 @@ struct lightDevice
 };
 
 
+struct tempDeviceProgram{
+  char mode = autoMode;                     //En que modo se activará?
+  char onDate[20];                          //Fecha para Encendido Automatico
+  char offDate[20];                         //Fecha para Apagado Automatico
+  float desiredTemperature = 25;            //A que temperatura?
+};
+
 //Struct del modulo de Temperatura
 struct tempDevice
 {
-  short desiredTemperature;   //Temperatura Deseada
-  unsigned short temperatureInterval;  //Intervalo de Temperatura
-  short actualTemperature;    //Temperatura Actual
-  short actualHumidity;       //Humedad Actual
-  short actualPressure;       //Presion Actual
-  char mode;                  //A=Auto, N=Apagado, C=Frio, H=Caliente
+  float desiredTemperature = 33;            //Temperatura Deseada
+  float actualTemperature = 0;              //Temperatura Actual
+  float actualHumidity = 0;                 //Humedad Actual
+  char mode = autoMode;                     //Modo de Operacion Auto, caliente, frio, solo aire
+  char status = on;                        //Encendido, Apagado, Esperando
+  tempDeviceProgram tempDataProg;
 };
-
 
 //Struct del modulo  de Acceso
 struct accsDevice

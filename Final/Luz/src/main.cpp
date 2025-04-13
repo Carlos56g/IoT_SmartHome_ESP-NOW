@@ -1,32 +1,12 @@
 #include <Arduino.h>
 #include <Wire.h>
 #include <Adafruit_TCS34725.h>
+#include "Structs.h"
+#include "FunctionsEspNow.h"
 
-#define SDA_PIN 21
-#define SCL_PIN 22
 
-
-struct lightDevice
-{
-  int pin; //Pin del led
-  char mode; // A=Auto, P=Presence, O=On, L=Off, B=Auto&Presence, T=Time
-  bool presence; //True=Puede Configurarse como Luz con Presencia
-  int presencePin; //Pin del sensor de presencia
-  int timeOn; //lleva el tiempo que se encendio el dispositivo
-  bool state; //True=Encendido, False=Apagado
-  int defaultTime; //Tiempo de encedido cuando detecta presencia
-  char *timeToOn; //Fecha programada de encendido
-  char *timeToOff; //Fecha programada de apagado
-};
-
-lightDevice lightDevices[] = {
-    {14, 'A', false, 0, 0, false, 0},
-    {27, 'A', false, 0, 0, false, 0},
-    {26, 'P', true, 35, 0, false, 5000},
-    {25, 'B', true, 34, 0, false, 5000}};
-
-int  desiredBrightness = 50;
-int numberLightDevices = sizeof(lightDevices) / sizeof(lightDevices[0]);
+lightDevices lightData;
+float actualBrightness;
 
 // Objeto de tipo sensor de Luz
 Adafruit_TCS34725 myTCS = Adafruit_TCS34725(TCS34725_INTEGRATIONTIME_614MS, TCS34725_GAIN_1X);
@@ -34,11 +14,147 @@ Adafruit_TCS34725 myTCS = Adafruit_TCS34725(TCS34725_INTEGRATIONTIME_614MS, TCS3
 int getLuminosity(Adafruit_TCS34725 &tcs);
 void printColorSensorInfo(Adafruit_TCS34725 &tcs);
 void controlLight(float lux, lightDevice &lightDevice);
+void initTCS();
+void initLightDevices();
+void controlLightsDevices();
+void validateTime(lightDevice &lightDevice);
 
-void setup(void)
+void setup()
 {
-
   Serial.begin(115200);
+  initTCS();
+  initLightDevices();
+  InitEspNow();
+}
+
+void loop()
+{
+  actualBrightness = getLuminosity(myTCS);
+  printLightDevices(lightData);
+  controlLightsDevices();
+  delay(1000);
+}
+void controlLightsDevices()
+{
+  for (int i = 0; i < numLightDevices; i++)
+  {
+    controlLight(actualBrightness, lightData.lightDev[i]);
+  }
+}
+
+void controlLight(float lux, lightDevice &lightDevice)
+{
+  switch (lightDevice.mode)
+  {
+  case on:
+    digitalWrite(lightDevice.pin, HIGH);
+    lightDevice.state = true;
+    break;
+  case off:
+    digitalWrite(lightDevice.pin, LOW);
+    lightDevice.state = false;
+    break;
+  case presence:
+    if (lightDevice.presencePin!=-1)
+    { // Primero debe de estar configurado como modo de presencia
+      if (digitalRead(lightDevice.presencePin) == LOW)
+      { // Aseguramos que el pin de presencia haya detectado algo
+        if (!lightDevice.state)
+        { // Si no esta encendido
+          digitalWrite(lightDevice.pin, HIGH);
+          lightDevice.timeOn = millis(); // Guardamos el momento en que se encendió
+          lightDevice.state = true;
+        }
+      }
+      if (lightDevice.state && millis() - lightDevice.timeOn >= lightDevice.defaultTimeOn)
+      {
+        digitalWrite(lightDevice.pin, LOW);
+        lightDevice.state = false;
+        lightDevice.timeOn = 0;
+      }
+    }
+    break;
+  case autoMode:
+    if (lux < lightDevice.desiredBrightness)
+    {
+      digitalWrite(lightDevice.pin, HIGH);
+      lightDevice.state = true;
+    }
+    else
+    {
+      digitalWrite(lightDevice.pin, LOW);
+      lightDevice.state = false;
+    }
+    break;
+  case presenceAndAuto:
+    if (lightDevice.presencePin!=-1)
+    { // Primero debe de estar configurado como modo de presencia
+      if (digitalRead(lightDevice.presencePin) == LOW)
+      { // Aseguramos que el pin de presencia haya detectado algo
+        if (!lightDevice.state)
+        { // Si no esta encendido
+          digitalWrite(lightDevice.pin, HIGH);
+          lightDevice.timeOn = millis(); // Guardamos el momento en que se encendió
+          lightDevice.state = true;
+        }
+      }
+      if (lightDevice.state && millis() - lightDevice.timeOn >= lightDevice.defaultTimeOn)
+      {
+        digitalWrite(lightDevice.pin, LOW);
+        lightDevice.state = false;
+        lightDevice.timeOn = 0;
+      }
+      if (lightDevice.timeOn != 0)
+        return;
+    }
+    if (lux < lightDevice.desiredBrightness)
+    {
+      digitalWrite(lightDevice.pin, HIGH);
+      lightDevice.state = true;
+    }
+    else
+    {
+      digitalWrite(lightDevice.pin, LOW);
+      lightDevice.state = false;
+    }
+    break;
+  }
+
+  validateTime(lightDevice);
+}
+
+void validateTime(lightDevice &lightDevice){
+  struct tm actualTime;
+  if(strlen(lightDevice.onDate) > 0)//Encendido Automatico
+  {
+    while (!getLocalTime(&actualTime)) { //Obtenemos la fecha actual
+      sendData(requestTime,lightData);
+    };
+
+    tm tmOnDate = convertStringToTm(lightDevice.onDate);
+    //Si el tiempo de encendido es menor al tiempo actual, significa que debe de encenderse
+    if(mktime(&tmOnDate)<mktime(&actualTime)){
+      lightDevice.mode=lightDevice.pMode;
+    }
+  }
+
+  if(strlen(lightDevice.offDate) > 0){
+    while (!getLocalTime(&actualTime)) { //Obtenemos la fecha actual
+      sendData(requestTime,lightData);
+      };
+
+      tm tmOffDate = convertStringToTm(lightDevice.offDate);
+      //Si el tiempo de apagado es menor al tiempo actual, significa que debe de apagarse
+      if(mktime(&tmOffDate)<mktime(&actualTime)){
+        lightDevice.mode=off;
+        strcpy(lightDevice.offDate, "");
+        strcpy(lightDevice.onDate, "");
+      }
+    }
+}
+
+void initTCS()
+{
   Wire.begin(SDA_PIN, SCL_PIN);
 
   if (myTCS.begin())
@@ -51,151 +167,32 @@ void setup(void)
     while (1)
       ;
   }
+}
 
+void initLightDevices()
+{
 
-  for (int i = 0; i < numberLightDevices; i++)
+  // Pines de los Leds
+  lightData.lightDev[0].pin = LED1_PIN;
+  lightData.lightDev[1].pin = LED2_PIN;
+  lightData.lightDev[2].pin = LED3_PIN;
+  lightData.lightDev[3].pin = LED4_PIN;
+
+  // Pines de los sensores de presencia
+  lightData.lightDev[0].presencePin = S1_PIN;
+  lightData.lightDev[1].presencePin = S2_PIN;
+  lightData.lightDev[2].presencePin = -1;
+  lightData.lightDev[3].presencePin = -1;
+
+  for (int i = 0; i < numLightDevices; i++)
   {
-    pinMode(lightDevices[i].pin, OUTPUT);
-    digitalWrite(lightDevices[i].pin, HIGH);
+    pinMode(lightData.lightDev[i].pin, OUTPUT);
+    digitalWrite(lightData.lightDev[i].pin, HIGH);
     delay(300);
-    digitalWrite(lightDevices[i].pin, LOW);
-    if (lightDevices[i].presence)
+    digitalWrite(lightData.lightDev[i].pin, LOW);
+    if (lightData.lightDev[i].presencePin != -1)
     {
-      pinMode(lightDevices[i].presencePin, INPUT);
+      pinMode(lightData.lightDev[i].presencePin, INPUT);
     }
-  }
-}
-
-void loop(void)
-{
-  printColorSensorInfo(myTCS);
-  float actualBrightness = getLuminosity(myTCS);
-  Serial.println(actualBrightness);
-  for (int i = 0; i < numberLightDevices; i++)
-  {
-    controlLight(actualBrightness, lightDevices[i]);
-  }
-}
-
-void printColorSensorInfo(Adafruit_TCS34725 &tcs)
-{
-  uint16_t r, g, b, c, colorTemp, lux;
-  tcs.getRawData(&r, &g, &b, &c);
-  colorTemp = tcs.calculateColorTemperature_dn40(r, g, b, c);
-  lux = tcs.calculateLux(r, g, b);
-  Serial.print("Color Temp: ");
-  Serial.print(colorTemp, DEC);
-  Serial.print(" K - ");
-  Serial.print("Lux: ");
-  Serial.print(lux, DEC);
-  Serial.print(" - ");
-  Serial.print("R: ");
-  Serial.print(r, DEC);
-  Serial.print(" ");
-  Serial.print("G: ");
-  Serial.print(g, DEC);
-  Serial.print(" ");
-  Serial.print("B: ");
-  Serial.print(b, DEC);
-  Serial.print(" ");
-  Serial.print("C: ");
-  Serial.print(c, DEC);
-  Serial.print(" ");
-  Serial.println(" ");
-}
-
-int getLuminosity(Adafruit_TCS34725 &tcs)
-{
-  uint16_t r, g, b, c, lux;
-  tcs.getRawData(&r, &g, &b, &c);
-  lux = tcs.calculateLux(r, g, b);
-  return lux;
-}
-
-void controlLight(float lux, lightDevice &lightDevice)
-{
-  switch (lightDevice.mode)
-  {
-  case 'O':
-    digitalWrite(lightDevice.pin, HIGH);
-    lightDevice.state = true;
-    break;
-  case 'L':
-    digitalWrite(lightDevice.pin, LOW);
-    lightDevice.state = false;
-    break;
-  case 'P':
-    if (lightDevice.presence)
-    { // Primero debe de estar configurado como modo de presencia
-      if (digitalRead(lightDevice.presencePin) == LOW)
-      { // Aseguramos que el pin de presencia haya detectado algo
-        if (!lightDevice.state)
-        { // Si no esta encendido
-          digitalWrite(lightDevice.pin, HIGH);
-          lightDevice.timeOn = millis(); // Guardamos el momento en que se encendió
-          lightDevice.state = true;
-        }
-      }
-      if (lightDevice.state && millis() - lightDevice.timeOn >= lightDevice.defaultTime)
-      {
-        digitalWrite(lightDevice.pin, LOW);
-        lightDevice.state = false;
-        lightDevice.timeOn=0;
-      }
-    }
-    break;
-  case 'A':
-    if (lux < desiredBrightness)
-    {
-      digitalWrite(lightDevice.pin, HIGH);
-      lightDevice.state = true;
-    }
-    else
-    {
-      digitalWrite(lightDevice.pin, LOW);
-      lightDevice.state = false;
-    }
-    break;
-  case 'B':
-    if (lightDevice.presence)
-    { // Primero debe de estar configurado como modo de presencia
-      if (digitalRead(lightDevice.presencePin) == LOW)
-      { // Aseguramos que el pin de presencia haya detectado algo
-        if (!lightDevice.state)
-        { // Si no esta encendido
-          digitalWrite(lightDevice.pin, HIGH);
-          lightDevice.timeOn = millis(); // Guardamos el momento en que se encendió
-          lightDevice.state = true;
-        }
-      }
-      if (lightDevice.state && millis() - lightDevice.timeOn >= lightDevice.defaultTime)
-      {
-        digitalWrite(lightDevice.pin, LOW);
-        lightDevice.state = false;
-        lightDevice.timeOn=0;
-      }
-      if(lightDevice.timeOn!=0)
-        return;
-    }
-    if (lux < desiredBrightness)
-    {
-      digitalWrite(lightDevice.pin, HIGH);
-      lightDevice.state = true;
-    }
-    else
-    {
-      digitalWrite(lightDevice.pin, LOW);
-      lightDevice.state = false;
-    }
-    break;
-  case 'T':
-    Serial.print("Pending Implementation");
-    // Se valida la fecha actual con la fecha que esta configurado el sensor
-    // Si se encuentra entre el intervalo de fecha establecido, se encedera el sensor
-    // La fecha la proporcionará el HOST
-    break;
-  default:
-    Serial.print("Not valid Mode");
-    break;
   }
 }

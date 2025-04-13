@@ -14,7 +14,7 @@ const tempData = {
     actualHumidity: 0,
     mode: "",
     status: "",
-    tempDataProg:{
+    tempDataProg: {
         mode: "",
         onDate: "",
         offDate: "",
@@ -24,16 +24,27 @@ const tempData = {
 
 const modes = {
     AccsNFC: 'D',
-    accsOpen:'E',
+    accsOpen: 'E',
     accsClose: 'F',
-    off:'G',
-    on:'H',
-    createKey:'I',
+    off: 'G',
+    on: 'H',
+    createKey: 'I',
     autoMode: 'O',
     hot: 'P',
     cold: 'Q',
     nothing: 'S',
     air: 'R',
+    presence: 'T',
+    presenceAndAuto: 'V',
+};
+
+const lightData = {
+    mode: "",
+    onDate: "",
+    offDate: "",
+    pMode: "",
+    desiredBrightness: 0,
+    defaultTimeOn: '',
 };
 
 
@@ -41,10 +52,10 @@ function toggleOnOffTemp() {
     const checkbox = document.getElementById("toggleStateTemp");
     const div = document.getElementById("Temp");
     const excludeIds = ["toggleStateTemp"];
-    const elements = div.querySelectorAll("input, button","select");
+    const elements = div.querySelectorAll("input, button", "select");
 
     elements.forEach(el => {
-        if(!excludeIds.includes(el.id))
+        if (!excludeIds.includes(el.id))
             el.disabled = !checkbox.checked;
     })
     return checkbox.checked;
@@ -63,11 +74,11 @@ function toggleCreateKeyAccs() {
 function toggleOnOffAccs() {
     const checkbox = document.getElementById("toggleSatateAccs");
     const div = document.getElementById("Accs");
-    const excludeIds = ["goToHistoryBtn","goToKeysBtn","toggleSatateAccs"];
+    const excludeIds = ["goToHistoryBtn", "goToKeysBtn", "toggleSatateAccs"];
     const elements = div.querySelectorAll("input, button");
 
     elements.forEach(el => {
-        if(!excludeIds.includes(el.id))
+        if (!excludeIds.includes(el.id))
             el.disabled = !checkbox.checked;
     })
     return checkbox.checked;
@@ -200,50 +211,50 @@ function getAccsKeys() {
 
 function deleteAccsHistory() {
     fetch('/api/Accs/History/delete', {
-      method: 'GET',  // Usamos el método GET para llamar al servidor
+        method: 'GET',  // Usamos el método GET para llamar al servidor
     })
-    .then(response => response.text())  // Respuesta en formato de texto
-    .then(data => {
-      console.log("Respuesta del servidor:", data);
-      alert(data);  // Muestra la respuesta
-    })
-    .catch(error => {
-      console.error("Error al eliminar el historial:", error);
-      alert("Hubo un problema al eliminar el historial.");
-    });
-  }
+        .then(response => response.text())  // Respuesta en formato de texto
+        .then(data => {
+            console.log("Respuesta del servidor:", data);
+            alert(data);  // Muestra la respuesta
+        })
+        .catch(error => {
+            console.error("Error al eliminar el historial:", error);
+            alert("Hubo un problema al eliminar el historial.");
+        });
+}
 
 function deleteAccsKeys() {
     fetch('/api/Accs/Keys/delete', {
-      method: 'GET',  // Usamos el método GET para llamar al servidor
+        method: 'GET',  // Usamos el método GET para llamar al servidor
     })
-    .then(response => response.text())  // Respuesta en formato de texto
-    .then(data => {
-      console.log("Respuesta del servidor:", data);
-      alert(data);  // Muestra la respuesta
-    })
-    .catch(error => {
-      console.error("Error al eliminar las llaves:", error);
-      alert("Hubo un problema al eliminar las llaves.");
-    });
-  }
+        .then(response => response.text())  // Respuesta en formato de texto
+        .then(data => {
+            console.log("Respuesta del servidor:", data);
+            alert(data);  // Muestra la respuesta
+        })
+        .catch(error => {
+            console.error("Error al eliminar las llaves:", error);
+            alert("Hubo un problema al eliminar las llaves.");
+        });
+}
 
 
-function getTempData(){
-    updateInput=true;
+function getTempData() {
+    updateInput = true;
     fetch('/api/Temp/get')
         .then(response => response.json())
         .then(data => {
 
-            if(window.location.pathname === "/Temp/Prog"){
-                const desiredProgTemperatureInput=document.getElementById('desiredProgTemperatureInput');
-                desiredProgTemperatureInput.value=data.tempDataProg.desiredTemperature;
-                const tempProgModeSelect=document.getElementById('tempProgModeSelect');
-                tempProgModeSelect.value=String.fromCharCode(data.tempDataProg.mode);
-                const onTempDate=document.getElementById('onTempDate');
-                onTempDate.value=data.tempDataProg.onDate;
-                const offTempDate=document.getElementById('offTempDate');
-                offTempDate.value=data.tempDataProg.offDate;
+            if (window.location.pathname === "/Temp/Prog") {
+                const desiredProgTemperatureInput = document.getElementById('desiredProgTemperatureInput');
+                desiredProgTemperatureInput.value = data.tempDataProg.desiredTemperature;
+                const tempProgModeSelect = document.getElementById('tempProgModeSelect');
+                tempProgModeSelect.value = String.fromCharCode(data.tempDataProg.mode);
+                const onTempDate = document.getElementById('onTempDate');
+                onTempDate.value = data.tempDataProg.onDate;
+                const offTempDate = document.getElementById('offTempDate');
+                offTempDate.value = data.tempDataProg.offDate;
                 return;
             }
 
@@ -259,16 +270,16 @@ function getTempData(){
             actualHumH2.innerHTML = data.actualHumidity;
             tbodyHum.appendChild(actualHumH2);
 
-            const desiredTemperatureInput=document.getElementById('desiredTemperatureInput');
-            if(desiredTemperatureInput.value!=data.desiredTemperature && !desiredTemperatureInput.matches(':focus')){
-                desiredTemperatureInput.value=data.desiredTemperature;
+            const desiredTemperatureInput = document.getElementById('desiredTemperatureInput');
+            if (desiredTemperatureInput.value != data.desiredTemperature && !desiredTemperatureInput.matches(':focus')) {
+                desiredTemperatureInput.value = data.desiredTemperature;
             }
 
-            const tempMode=document.getElementById('tempModeSelect');
-            if(tempMode.value!=String.fromCharCode(data.mode)){
-                tempMode.value=String.fromCharCode(data.mode);
+            const tempMode = document.getElementById('tempModeSelect');
+            if (tempMode.value != String.fromCharCode(data.mode)) {
+                tempMode.value = String.fromCharCode(data.mode);
             }
-            
+
         })
         .catch(error => console.error("Error al obtener la temperatura actual:", error));
 }
@@ -294,7 +305,7 @@ function tempOn() {
     tempData.status = modes.on;
     tempData.mode = document.getElementById("tempModeSelect").value
     tempData.desiredTemperature = document.getElementById("desiredTemperatureInput").value
-    
+
     fetch("http://192.168.31.191/api/Temp/Mode", {
         method: 'POST',
         headers: {
@@ -308,13 +319,13 @@ function tempOn() {
 }
 
 function updateTempData() {
-    tempData.mode=document.getElementById("tempModeSelect").value;
-    tempData.status=modes.on; //Para actualzar los datos de la temperetura, debe de estar prendido
+    tempData.mode = document.getElementById("tempModeSelect").value;
+    tempData.status = modes.on; //Para actualzar los datos de la temperetura, debe de estar prendido
 
-    if(tempData.mode===modes.autoMode){ //Si es modo automatico, agarrar el valor del input
-        tempData.desiredTemperature=document.getElementById("desiredTemperatureInput").value
+    if (tempData.mode === modes.autoMode) { //Si es modo automatico, agarrar el valor del input
+        tempData.desiredTemperature = document.getElementById("desiredTemperatureInput").value
     }
-    
+
     fetch("http://192.168.31.191/api/Temp/Mode", {
         method: 'POST',
         headers: {
@@ -332,7 +343,7 @@ function saveTempProg() {
     tempData.tempDataProg.desiredTemperature = document.getElementById("desiredProgTemperatureInput").value
     tempData.tempDataProg.offDate = document.getElementById("offTempDate").value
     tempData.tempDataProg.onDate = document.getElementById("onTempDate").value
-    
+
     fetch("http://192.168.31.191/api/TempProg/Update", {
         method: 'POST',
         headers: {
@@ -345,6 +356,85 @@ function saveTempProg() {
         .catch(error => console.error('Error:', error));
 }
 
+function getLightsData() {
+    updateInput = true;
+    fetch('/api/Lights/get')
+        .then(response => response.json())
+        .then(data => {
+            const tbody = document.getElementById('lightsBody');
+            tbody.innerHTML = "";
+            data.forEach((light, index) => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+            <td>${index + 1}</td>
+            
+            <td><select id="lightModeSelect-${index}">
+                            <option value="H" ${light.mode === 72 ? 'selected' : ''}>Encendido</option>
+                            <option value="G" ${light.mode === 71 ? 'selected' : ''}>Apagado</option>
+                            <option value="T" ${light.mode === 84 ? 'selected' : ''}>Presencia</option>
+                            <option value="O" ${light.mode === 79 ? 'selected' : ''}>Automatico</option>
+                            <option value="V" ${light.mode === 86 ? 'selected' : ''}>Presencia y Auto</option>
+            </select></td>
+            
+            <td><input type="datetime-local" id="onLightDate-${index}" name="inicio" value=${light.onDate}></td>
+            
+            <td><input type="datetime-local" id="offLightDate-${index}" name="inicio" value=${light.offDate}></td>
+
+            <td><select id="lightModeProgSelect-${index}">
+                            <option value="H" ${light.pMode === 72 ? 'selected' : ''}>Encendido</option>
+                            <option value="G" ${light.pMode === 71 ? 'selected' : ''}>Apagado</option>
+                            <option value="T" ${light.pMode === 84 ? 'selected' : ''}>Presencia</option>
+                            <option value="O" ${light.pMode === 79 ? 'selected' : ''}>Automatico</option>
+                            <option value="V" ${light.pMode === 86 ? 'selected' : ''}>Presencia y Auto</option>
+            </select></td>
+
+            <td><input type="number" id="lightdesiredBrightness-${index}" name="inicio" value=${light.desiredBrightness}></td>
+            
+            <td><input type="number" id="lightdefaultTimeOn-${index}" name="inicio" value=${light.defaultTimeOn}></td>
+
+            <td>${light.state}</td>`
+                    ;
+                tbody.appendChild(row);
+            });
+        })
+        .catch(error => console.error("Error al obtener la informacion de las luces:", error));
+}
+
+function updateLights() {
+    const updatedLights = [];
+
+    const rows = document.querySelectorAll("#lightsBody tr");
+    rows.forEach((row, index) => {
+        const light = {
+            mode: document.getElementById(`lightModeSelect-${index}`).value,
+            onDate: document.getElementById(`onLightDate-${index}`).value,
+            offDate: document.getElementById(`offLightDate-${index}`).value,
+            pMode: document.getElementById(`lightModeProgSelect-${index}`).value,
+            desiredBrightness: parseFloat(document.getElementById(`lightdesiredBrightness-${index}`).value),
+            defaultTimeOn: parseFloat(document.getElementById(`lightdefaultTimeOn-${index}`).value),
+        };
+
+        updatedLights.push(light);
+    });
+
+    const lightsData = {
+        lightData: updatedLights
+    };
+    
+
+    fetch("http://192.168.31.191/api/Lights/Update", {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(lightsData)
+    })
+        .then(response => response.json())
+        .then(data => console.log(data))
+        .catch(error => console.error('Error:', error));
+
+
+}
 
 
 //Obtendra la temperatura cada 2s

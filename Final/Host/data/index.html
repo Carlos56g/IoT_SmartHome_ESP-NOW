@@ -7,7 +7,7 @@
   <link rel="stylesheet" href="style.css">
 </head>
 
-<body>
+<body onload="getLightsData()">
   <div id="Temp">
     <h1>Temperatura</h1>
 
@@ -37,8 +37,31 @@
 
   </div>
 
+  <label>
+    <input type="checkbox" id="toggleStateLight" checked onchange="OnOffLight()"> Encender Modulo de Luz
+  </label>
+
   <div>
     <h2>Luz:</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Luz</th>
+          <th>Modo</th>
+          <th>Fecha de Encendido</th>
+          <th>Fecha de Apagado</th>
+          <th>Modo Programable</th>
+          <th>Humdral del Sensor</th>
+          <th>Tiempo de Encendido</th>
+          <th>Estado</th>
+        </tr>
+      </thead>
+      <tbody id="lightsBody">
+        <!-- Aquí se insertan las filas dinámicamente -->
+      </tbody>
+    </table>
+
+    <button id="updateLightsBtn" onclick="updateLights()">Actualizar Luces</button>
 
   </div>
 

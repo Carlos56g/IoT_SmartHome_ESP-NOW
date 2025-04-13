@@ -130,7 +130,7 @@ void setup()
     sendData(tempModule, receivedData);
     request->send(200, "application/json", "{\"status\":\"ok\"}"); });
 
-  Server.on("/api/TempProg/Update", HTTP_POST, [](AsyncWebServerRequest *request) {}, NULL, [](AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total)
+  Server.on("/api/Lights/Update", HTTP_POST, [](AsyncWebServerRequest *request) {}, NULL, [](AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total)
             {
     String body = String((char*)data).substring(0, len);
       
@@ -149,17 +149,51 @@ void setup()
     }
               
     // Asignar los valores del JSON al struct, haciendo la conversión de char a unsigned char
-    updateTempProgData(doc);
-    sendData(tempModule, receivedData);
+    updateLightsData(doc);
+    sendData(lightModule, receivedData);
     request->send(200, "application/json", "{\"status\":\"ok\"}"); });
+
+    Server.on("/api/TempProg/Update", HTTP_POST, [](AsyncWebServerRequest *request) {}, NULL, [](AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total)
+    {
+String body = String((char*)data).substring(0, len);
+
+Serial.println("📩 Body recibido:");
+Serial.println(body);
+
+JsonDocument doc; // Usar JsonDocument
+
+// Deserializar el JSON recibido
+DeserializationError error = deserializeJson(doc, body);
+          
+if (error) {
+Serial.println("Error al deserializar el JSON");
+request->send(400, "application/json", "{\"error\":\"Bad JSON\"}");
+return;
+}
+      
+// Asignar los valores del JSON al struct, haciendo la conversión de char a unsigned char
+updateTempProgData(doc);
+sendData(tempModule, receivedData);
+request->send(200, "application/json", "{\"status\":\"ok\"}"); });
 
   Server.on("/api/Temp/get", HTTP_GET, [](AsyncWebServerRequest *request)
             {
               requestModule(tempModule, requestData); // Pedimos los Datos
               JsonDocument doc;
-              doc = updateDoc(tempModule, doc); // Actualizamos la respuesta con los datos recibidos
+              doc = updateDoc(tempModule); // Actualizamos la respuesta con los datos recibidos
               String output;
               serializeJson(doc, output);                     // Serializa el JSON
+              request->send(200, "application/json", output); // Envia la respuesta
+            });
+
+  Server.on("/api/Lights/get", HTTP_GET, [](AsyncWebServerRequest *request)
+            {
+              requestModule(lightModule, requestData); // Pedimos los Datos
+              JsonDocument doc;
+              doc = updateDoc(lightModule);
+              String output;
+              serializeJson(doc, output);           // Serializa el JSON
+              Serial.println(output);                     
               request->send(200, "application/json", output); // Envia la respuesta
             });
 
@@ -168,12 +202,8 @@ void setup()
   Server.serveStatic("/script.js", SPIFFS, "/script.js");
 
   // Ruta para obtener la informacion del modulo de Luz
-  Server.on("/getLights", HTTP_GET, [](AsyncWebServerRequest *request)
-            { sendData(2, receivedData); });
 
-  // Ruta para obtener la informacion del modulo de Luz
-  Server.on("/getTemp", HTTP_GET, [](AsyncWebServerRequest *request)
-            { sendData(1, receivedData); });
+
 
   Server.begin();
 }

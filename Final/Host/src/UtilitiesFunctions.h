@@ -5,45 +5,90 @@
 #include "FunctionsEspNow.h"
 #include <Arduino.h>
 
-void printAccsDevice(const accsDevice& device) {
+void printAccsDevice(const accsDevice &device)
+{
   Serial.println("----- accsDevice Info -----");
 
   Serial.print("Key: ");
   Serial.println(device.key);
 
   Serial.print("Mode: ");
-  switch (device.mode) {
-    case AccsNFC: Serial.println("AccsNFC"); break;
-    case accsOpen: Serial.println("accsOpen"); break;
-    case accsClose: Serial.println("accsClose"); break;
-    case off: Serial.println("off"); break;
-    case on: Serial.println("on"); break;
-    case createKey: Serial.println("createKey"); break;
-    default: Serial.print("Unknown ("); Serial.print(device.mode); Serial.println(")"); break;
+  switch (device.mode)
+  {
+  case AccsNFC:
+    Serial.println("AccsNFC");
+    break;
+  case accsOpen:
+    Serial.println("accsOpen");
+    break;
+  case accsClose:
+    Serial.println("accsClose");
+    break;
+  case off:
+    Serial.println("off");
+    break;
+  case on:
+    Serial.println("on");
+    break;
+  case createKey:
+    Serial.println("createKey");
+    break;
+  default:
+    Serial.print("Unknown (");
+    Serial.print(device.mode);
+    Serial.println(")");
+    break;
   }
 
   Serial.print("Status: ");
-  switch (device.status) {
-    case accept: Serial.println("accept"); break;
-    case deny: Serial.println("deny"); break;
-    case waitingNewKey: Serial.println("waitingNewKey"); break;
-    case userRegistered: Serial.println("userRegistered"); break;
-    case accsOpen: Serial.println("accsOpen"); break;
-    case accsClose: Serial.println("accsClose"); break;
-    case on: Serial.println("on"); break;
-    case off: Serial.println("off"); break;
-    case deleteData: Serial.println("deleteData"); break;
-    // Puedes agregar más si usas otros en status
-    default: Serial.print("Unknown ("); Serial.print(device.status); Serial.println(")"); break;
+  switch (device.status)
+  {
+  case accept:
+    Serial.println("accept");
+    break;
+  case deny:
+    Serial.println("deny");
+    break;
+  case waitingNewKey:
+    Serial.println("waitingNewKey");
+    break;
+  case userRegistered:
+    Serial.println("userRegistered");
+    break;
+  case accsOpen:
+    Serial.println("accsOpen");
+    break;
+  case accsClose:
+    Serial.println("accsClose");
+    break;
+  case on:
+    Serial.println("on");
+    break;
+  case off:
+    Serial.println("off");
+    break;
+  case deleteData:
+    Serial.println("deleteData");
+    break;
+  // Puedes agregar más si usas otros en status
+  default:
+    Serial.print("Unknown (");
+    Serial.print(device.status);
+    Serial.println(")");
+    break;
   }
 
   Serial.print("Date: ");
   Serial.println(device.date);
 
   Serial.println("Stored Keys:");
-  for (int i = 0; i < MAX_KEYS_NUM; i++) {
-    if (device.keys[i][0] != '\0') { // Solo imprime si hay algo
-      Serial.print("  ["); Serial.print(i); Serial.print("] ");
+  for (int i = 0; i < MAX_KEYS_NUM; i++)
+  {
+    if (device.keys[i][0] != '\0')
+    { // Solo imprime si hay algo
+      Serial.print("  [");
+      Serial.print(i);
+      Serial.print("] ");
       Serial.println(device.keys[i]);
     }
   }
@@ -51,13 +96,14 @@ void printAccsDevice(const accsDevice& device) {
   Serial.println("---------------------------");
 }
 
-
-void printAccsHistory(std::list<accsEvent> accsHistory){
+void printAccsHistory(std::list<accsEvent> accsHistory)
+{
   accsEvent accsEvent;
   Serial.println(accsHistory.size());
   Serial.println("Historial De Acceso: ");
-  while(!accsHistory.empty()){
-    accsEvent=accsHistory.back();
+  while (!accsHistory.empty())
+  {
+    accsEvent = accsHistory.back();
     accsHistory.pop_back();
     Serial.print("Key: ");
     Serial.print(accsEvent.key);
@@ -68,34 +114,6 @@ void printAccsHistory(std::list<accsEvent> accsHistory){
     Serial.println();
   }
 }
-
-void initializeData()
-{
-  // Rellenar el struct con los datos que deseas enviar
-  receivedData.idR = 1;
-  receivedData.idE = 2;
-  receivedData.instruction = 10;
-
-  // Llenar los dispositivos de luz
-  receivedData.lightModule[0].pin = 12;
-  receivedData.lightModule[0].mode = 'A';
-  receivedData.lightModule[0].presence = true;
-  receivedData.lightModule[0].presencePin = 5;
-  receivedData.lightModule[0].timeOn = 0;
-  receivedData.lightModule[0].state = false;
-  receivedData.lightModule[0].defaultTime = 10;
-
-  // Llenar el dispositivo de temperatura
-  receivedData.temperatureModule.desiredTemperature = 22.5;
-  receivedData.temperatureModule.actualTemperature = 21.0;
-  receivedData.temperatureModule.actualHumidity = 50.0;
-  receivedData.temperatureModule.mode = 'A';
-
-  // Llenar el dispositivo de acceso
-  strcpy(receivedData.accessModule.key, "CarlosGarcia001"); // Llave de acceso
-  receivedData.accessModule.mode = 'K';
-}
-
 
 void getDateServer(char *date, size_t size)
 {
@@ -205,28 +223,58 @@ void updateTempProgData(JsonDocument doc)
 
   receivedData.temperatureModule.tempDataProg.desiredTemperature = doc["tempDataProg"]["desiredTemperature"];
 
-  receivedData.temperatureModule.tempDataProg.mode = ((const char *) doc["tempDataProg"]["mode"])[0];
+  receivedData.temperatureModule.tempDataProg.mode = ((const char *)doc["tempDataProg"]["mode"])[0];
 }
 
-JsonDocument updateDoc(char module, JsonDocument doc){
+JsonDocument updateDoc(char module)
+{
+  JsonDocument doc;
   switch (module)
   {
   case tempModule:
-    doc["actualTemperature"]=receivedData.temperatureModule.actualTemperature;
-    doc["actualHumidity"]=receivedData.temperatureModule.actualHumidity;
-    doc["desiredTemperature"]=receivedData.temperatureModule.desiredTemperature;
-    doc["mode"]=(signed char)receivedData.temperatureModule.mode;
-    doc["tempDataProg"]["mode"]=(signed char)receivedData.temperatureModule.tempDataProg.mode;
-    doc["tempDataProg"]["onDate"]=receivedData.temperatureModule.tempDataProg.onDate;
-    doc["tempDataProg"]["offDate"]=receivedData.temperatureModule.tempDataProg.offDate;
-    doc["tempDataProg"]["desiredTemperature"]=receivedData.temperatureModule.tempDataProg.desiredTemperature;
-
+    doc["actualTemperature"] = receivedData.temperatureModule.actualTemperature;
+    doc["actualHumidity"] = receivedData.temperatureModule.actualHumidity;
+    doc["desiredTemperature"] = receivedData.temperatureModule.desiredTemperature;
+    doc["mode"] = (signed char)receivedData.temperatureModule.mode;
+    doc["tempDataProg"]["mode"] = (signed char)receivedData.temperatureModule.tempDataProg.mode;
+    doc["tempDataProg"]["onDate"] = receivedData.temperatureModule.tempDataProg.onDate;
+    doc["tempDataProg"]["offDate"] = receivedData.temperatureModule.tempDataProg.offDate;
+    doc["tempDataProg"]["desiredTemperature"] = receivedData.temperatureModule.tempDataProg.desiredTemperature;
     break;
-  
-  default:
+
+  case lightModule:
+    JsonArray arr = doc.to<JsonArray>();
+    for (int i = 0; i < numLightDevices; i++)
+    {
+      JsonObject individualLight=arr.createNestedObject();
+      individualLight["mode"] = (signed char)receivedData.lightModule.lightDev[i].mode;
+      individualLight["pMode"] = (signed char)receivedData.lightModule.lightDev[i].pMode;
+      individualLight["onDate"] = receivedData.lightModule.lightDev[i].onDate;
+      individualLight["offDate"] = receivedData.lightModule.lightDev[i].offDate;
+      individualLight["state"] = (signed char)receivedData.lightModule.lightDev[i].state;
+      individualLight["desiredBrightness"] = receivedData.lightModule.lightDev[i].desiredBrightness;
+      individualLight["defaultTimeOn"] = receivedData.lightModule.lightDev[i].defaultTimeOn;
+    }
     break;
   }
   return doc;
+}
+
+void updateLightsData(JsonDocument doc)
+{
+  JsonArray arr = doc["lightData"].as<JsonArray>();
+  for (int i = 0; i < numLightDevices && i < arr.size(); i++) {
+    JsonObject obj = arr[i];
+
+    receivedData.lightModule.lightDev[i].mode = ((const char*)obj["mode"])[0];
+    receivedData.lightModule.lightDev[i].pMode = ((const char*)obj["pMode"])[0];
+
+    strncpy(receivedData.lightModule.lightDev[i].onDate, obj["onDate"] | "", 20);
+    strncpy(receivedData.lightModule.lightDev[i].offDate, obj["offDate"] | "", 20);
+
+    receivedData.lightModule.lightDev[i].desiredBrightness = obj["desiredBrightness"] | 0.0;
+    receivedData.lightModule.lightDev[i].defaultTimeOn = obj["defaultTimeOn"] | 0.0;
+  }
 }
 
 void readAccsHistory()
@@ -238,37 +286,39 @@ void readAccsHistory()
     Serial.println("No se encontró el archivo AccsHistory.txt");
     return;
   }
-  String allAccsStringData=file.readString();
+  String allAccsStringData = file.readString();
   file.close();
   accsEvent accsEvent;
   String individualAccsStringData;
-  int startRow=0;
-  int endRow=0;
+  int startRow = 0;
+  int endRow = 0;
   Serial.println("All String");
   Serial.println(allAccsStringData);
   accsHistory.clear();
 
-  while(true){
-    endRow=allAccsStringData.indexOf('\n',startRow);
+  while (true)
+  {
+    endRow = allAccsStringData.indexOf('\n', startRow);
     Serial.println("endRow:");
     Serial.println(endRow);
-    if(endRow==-1){
+    if (endRow == -1)
+    {
       break;
     }
-    individualAccsStringData=allAccsStringData.substring(startRow,endRow);
+    individualAccsStringData = allAccsStringData.substring(startRow, endRow);
 
     int endKey = individualAccsStringData.indexOf(',');
-    int endDate = individualAccsStringData.lastIndexOf(','); //Encuentra el final del registro = Status
+    int endDate = individualAccsStringData.lastIndexOf(','); // Encuentra el final del registro = Status
 
-    String key = individualAccsStringData.substring(0,endKey); //Del inicio a el primer caracter nulo = Key
-    String date = individualAccsStringData.substring(endKey+1,endDate); //Lo restante es la fecha
-    String status = individualAccsStringData.substring(endDate+1,endDate+2); //Lo ultimo siempre sera el Status
+    String key = individualAccsStringData.substring(0, endKey);                   // Del inicio a el primer caracter nulo = Key
+    String date = individualAccsStringData.substring(endKey + 1, endDate);        // Lo restante es la fecha
+    String status = individualAccsStringData.substring(endDate + 1, endDate + 2); // Lo ultimo siempre sera el Status
 
-    key.toCharArray(accsEvent.key,sizeof(accsEvent.key));
-    accsEvent.status=status[0];
-    date.toCharArray(accsEvent.date,sizeof(accsEvent.date));
+    key.toCharArray(accsEvent.key, sizeof(accsEvent.key));
+    accsEvent.status = status[0];
+    date.toCharArray(accsEvent.date, sizeof(accsEvent.date));
     accsHistory.push_back(accsEvent);
-    startRow=endRow+1;
+    startRow = endRow + 1;
   }
   Serial.println("Elementos de la Lista:");
   Serial.println(accsHistory.size());
@@ -284,9 +334,9 @@ void saveAccsHistory(accsEvent accsEvent)
     Serial.println("Error al abrir el archivo de AccsHistory");
     return;
   }
-  if(accsEvent.status==NULL)//Hay veces que el status se manda Nulo y trueba el archivo de historial
+  if (accsEvent.status == NULL) // Hay veces que el status se manda Nulo y trueba el archivo de historial
     return;
-  
+
   file.print(accsEvent.key);
   file.print(',');
   file.print(accsEvent.date);
@@ -296,7 +346,8 @@ void saveAccsHistory(accsEvent accsEvent)
   file.close();
 }
 
-void deleteAccsHistory(){
+void deleteAccsHistory()
+{
   if (SPIFFS.remove("/AccsHistory.txt"))
   {
     Serial.println("Archivo borrado!");
@@ -315,6 +366,45 @@ void printSPIIFFiles()
   }
 }
 
+void printLightDevices(const lightDevices &devices)
+{
+  for (int i = 0; i < numLightDevices; i++)
+  {
+    Serial.print("Dispositivo ");
+    Serial.println(i + 1);
 
+    Serial.print("  Pin LED: ");
+    Serial.println(devices.lightDev[i].pin);
+
+    Serial.print("  Modo: ");
+    Serial.println(devices.lightDev[i].mode);
+
+    Serial.print("  Pin de presencia: ");
+    Serial.println(devices.lightDev[i].presencePin);
+
+    Serial.print("  Tiempo encendido (ms): ");
+    Serial.println(devices.lightDev[i].timeOn);
+
+    Serial.print("  Estado (1=Encendido, 0=Apagado): ");
+    Serial.println(devices.lightDev[i].state);
+
+    Serial.print("  Fecha ON: ");
+    Serial.println(devices.lightDev[i].onDate);
+
+    Serial.print("  Fecha OFF: ");
+    Serial.println(devices.lightDev[i].offDate);
+
+    Serial.print("  Modo programado: ");
+    Serial.println(devices.lightDev[i].pMode);
+
+    Serial.print("  Brillo deseado: ");
+    Serial.println(devices.lightDev[i].desiredBrightness);
+
+    Serial.print("  Tiempo encendido por defecto (ms): ");
+    Serial.println(devices.lightDev[i].defaultTimeOn);
+
+    Serial.println("-----------------------------------");
+  }
+}
 
 #endif

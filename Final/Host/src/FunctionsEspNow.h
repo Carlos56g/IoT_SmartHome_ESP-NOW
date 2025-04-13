@@ -89,7 +89,7 @@ void onDataReceived(const uint8_t *mac, const uint8_t *data, int len)
 		memcpy(&receivedData.temperatureModule, data, sizeof(tempDevice));
 		break;
 	case lightModule: // Luz
-		memcpy(&receivedData.lightModule, data, sizeof(lightDevice));
+		memcpy(&receivedData.lightModule, data, sizeof(lightDevices));
 		break;
 	case accsModule: // Accs
 		memcpy(&receivedData.accessModule, data, sizeof(accsDevice));	//Copiamos los datos recividos a la variable global
@@ -106,6 +106,7 @@ void onDataReceived(const uint8_t *mac, const uint8_t *data, int len)
 		Serial.println("ID INVALIDO");
 		break;
 	}
+	printLightDevices(receivedData.lightModule);
 }
 
 // Registra un dispositivo a la red de ESP-NOW con el ID especificado

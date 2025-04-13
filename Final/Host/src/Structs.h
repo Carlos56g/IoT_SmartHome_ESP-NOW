@@ -1,6 +1,7 @@
 #ifndef STRUCTS_H
 #define STRUCTS_H
 #define MAX_KEYS_NUM 10
+#define numLightDevices 4
 
 #include <list>
 
@@ -42,19 +43,29 @@ enum tempModes{
   air = 'R',
 };
 
+enum lightModes{
+  presence = 'T',
+  presenceAndAuto = 'V',
+};
+
 
 //Struct de los dispositivos de LUZ
 struct lightDevice
 {
-  unsigned short pin;            //Pin del led
-  char mode;          // A=Auto, P=Presence, O=On, L=Off, B=Auto&Presence, T=Time
-  bool presence;      //True=Puede Configurarse como Luz con Presencia
-  unsigned short presencePin;    //Pin del sensor de presencia
-  unsigned short timeOn;         //lleva el tiempo que se encendio el dispositivo
-  bool state;         //True=Encendido, False=Apagado
-  unsigned short defaultTime;    //Tiempo de encedido cuando detecta presencia
-  char timeToOn[20];     //Fecha programada de encendido
-  char timeToOff[20];    //Fecha programada de apagado
+  unsigned short pin;             //Pin del led
+  char mode = autoMode;           // A=Auto, P=Presence, O=On, L=Off, B=Auto&Presence, T=Time
+  unsigned short presencePin;     //Pin del sensor de presencia
+  short timeOn;          //lleva el tiempo que se encendio el dispositivo
+  bool state;                     //True=Encendido, False=Apagado
+  char onDate[20];              //Fecha programada de encendido
+  char offDate[20];             //Fecha programada de apagado
+  char pMode=autoMode;
+  float desiredBrightness=110;
+  float defaultTimeOn=5000;
+};
+
+struct lightDevices{
+  lightDevice lightDev[numLightDevices];
 };
 
 
@@ -95,12 +106,9 @@ struct accsEvent
 };
 
 struct espNowData {
-  unsigned short idR;                      //ID del dispositivo que recibe (0=Host, 1=Temp, 2=Luz, 3=Accs)
-  unsigned short idE;                      //ID del dispositivo que envia (0=Host, 1=Temp, 2=Luz, 3=Accs)
-  char instruction;              //Instruccion que se le pedira 
-  lightDevice lightModule[4];  //Datos de los dispositivos de LUZ
-  tempDevice temperatureModule;        //Datos del modulo de temperatura
-  accsDevice accessModule;        //Datos del modulo de acceso
+  lightDevices lightModule;             //Datos de los dispositivos de LUZ
+  tempDevice temperatureModule;         //Datos del modulo de temperatura
+  accsDevice accessModule;              //Datos del modulo de acceso
 };
 
 

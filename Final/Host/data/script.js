@@ -52,12 +52,20 @@ function toggleOnOffTemp() {
     const checkbox = document.getElementById("toggleStateTemp");
     const div = document.getElementById("Temp");
     const excludeIds = ["toggleStateTemp"];
-    const elements = div.querySelectorAll("input, button", "select");
+    const elements = div.querySelectorAll("input, button, select");
 
     elements.forEach(el => {
-        if (!excludeIds.includes(el.id))
+        if (!excludeIds.includes(el.id)) {
             el.disabled = !checkbox.checked;
-    })
+    
+            if (!checkbox.checked) {
+                el.classList.add("disabled-style");
+            } else {
+                el.classList.remove("disabled-style");
+            }
+        }
+    });
+
     return checkbox.checked;
 }
 

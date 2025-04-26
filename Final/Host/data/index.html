@@ -5,22 +5,32 @@
   <meta charset="UTF-8">
   <title>Smart Home</title>
   <link rel="stylesheet" href="style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cal+Sans&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Lexend:wght@100..900&display=swap" rel="stylesheet">
 </head>
 
 <body onload="getLightsData()">
   <div id="Temp">
     <h1>Temperatura</h1>
 
-    <label>
-      <input type="checkbox" id="toggleStateTemp" checked onchange="OnOffTemp()"> Encender Modulo de Temperatura
-    </label>
+
+    
+    <div class="checkbox-wrapper-5">
+      <div class="check">
+        <input type="checkbox" id="toggleStateTemp" checked onchange="OnOffTemp()">
+        <label for="toggleStateTemp"></label> 
+      </div>
+      <span>Encender Módulo de Temperatura</span>
+    </div>
 
     <h2>Temperatura Actual: </h2> <div id="actualTemp"></div> 
 
     <h2>Humedad Actual: </h2> <div id="actualHum"></div> 
 
     <h2>Modo actual: </h2>
-    <select name="select" id="tempModeSelect" onchange="updateTempData()"> <!--Se Supone que se debe de desactivar si se desactiva la checkbox-->
+    <select name="select" id="tempModeSelect" onchange="updateTempData()" class="custom-select"> <!--Se Supone que se debe de desactivar si se desactiva la checkbox-->
       <option value="O">Automatico</option>
       <option value="P" selected>Caliente</option>
       <option value="Q">Frio</option>
@@ -28,55 +38,62 @@
     </select>
 
     <h2>Temperatura Deseada: </h2>
-    <input type="number" id="desiredTemperatureInput" onchange="updateTempData()"> <!--Se Supone que se debe de desactivar si el modo es diferente a automatico-->
+    <input type="number" id="desiredTemperatureInput" onchange="updateTempData()" class="costum-input"> <!--Se Supone que se debe de desactivar si el modo es diferente a automatico-->
 
     <br><br>
     <a href="/Temp/Prog">
-      <button id="goToProgTemp">Programar Encendido</button>
+      <button id="goToProgTemp" >Programar Encendido</button>
     </a>
 
   </div>
-
-  <label>
-    <input type="checkbox" id="toggleStateLight" checked onchange="OnOffLight()"> Encender Modulo de Luz
-  </label>
+<br>
+  <div class="checkbox-wrapper-5">
+    <div class="check">
+      <input type="checkbox" id="toggleStateLight" checked onchange="OnOffLight()">
+      <label for="toggleStateLight"></label> 
+    </div>
+    <span>Encender Módulo de Luz</span>
+  </div>
 
   <div>
     <h2>Luz:</h2>
-    <table>
-      <thead>
-        <tr>
-          <th>Luz</th>
-          <th>Modo</th>
-          <th>Fecha de Encendido</th>
-          <th>Fecha de Apagado</th>
-          <th>Modo Programable</th>
-          <th>Humdral del Sensor</th>
-          <th>Tiempo de Encendido</th>
-          <th>Estado</th>
-        </tr>
-      </thead>
-      <tbody id="lightsBody">
-        <!-- Aquí se insertan las filas dinámicamente -->
-      </tbody>
-    </table>
+        <table >
+          <thead>
+            <tr>
+              <th>Luz</th>
+              <th>Modo</th>
+              <th>Fecha de Encendido</th>
+              <th>Fecha de Apagado</th>
+              <th>Modo Programable</th>
+              <th>Humdral del Sensor</th>
+              <th>Tiempo de Encendido</th>
+              <th>Estado</th>
+            </tr>
+          </thead>
+          <tbody id="lightsBody">
+            <!-- Aquí se insertan las filas dinámicamente -->
+          </tbody>
+        </table>
+        <br>
 
-    <button id="updateLightsBtn" onclick="updateLights()">Actualizar Luces</button>
+
+    <button id="updateLightsBtn" onclick="updateLights()" >Actualizar Luces</button>
 
   </div>
 
   <div id="Accs">
     <h2>Acceso:</h2>
     <label>
-      <input type="checkbox" id="toggleSatateAccs" checked onchange="OnOffAccs()"> Encender Modulo de Acceso
+      <input type="checkbox" id="toggleSatateAccs" checked onchange="OnOffAccs()" class="big-checkbox"> Encender Modulo de Acceso
     </label>
+    
     <label>
-      <input type="checkbox" id="toggleCreateKey" onchange="toggleCreateKeyAccs()" checked> Crear LLave
+      <input type="checkbox" id="toggleCreateKey" onchange="toggleCreateKeyAccs()" checked class="big-checkbox" > Crear LLave
     </label>
+    <br><br><br>
+    <input type="text" maxlength="15" id="accsKeyInput" class="costum-input">
     <br><br>
-    <input type="text" maxlength="15" id="accsKeyInput">
-    <br><br>
-    <button id="accsKeyButton" onclick="accsCreateKey()">Crear Llave!</button>
+    <button id="accsKeyButton" onclick="accsCreateKey()" >Crear Llave!</button>
     <br><br>
     <button id="accsOpenButton" onclick="accsOpen()">Abir Acceso</button>
     <button id="accsCloseButton" onclick="accsClose()">Cerrar Acceso</button>

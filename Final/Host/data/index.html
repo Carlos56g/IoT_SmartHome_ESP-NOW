@@ -11,12 +11,11 @@
   <link href="https://fonts.googleapis.com/css2?family=Lexend:wght@100..900&display=swap" rel="stylesheet">
 </head>
 
-<body onload="getLightsData()">
+<body>
+
   <div id="Temp">
     <h1>Temperatura</h1>
 
-
-    
     <div class="checkbox-wrapper-5">
       <div class="check">
         <input type="checkbox" id="toggleStateTemp" checked onchange="OnOffTemp()">
@@ -46,7 +45,11 @@
     </a>
 
   </div>
-<br>
+  
+  <br>
+
+<div id="Light">
+
   <div class="checkbox-wrapper-5">
     <div class="check">
       <input type="checkbox" id="toggleStateLight" checked onchange="OnOffLight()">
@@ -55,7 +58,6 @@
     <span>Encender Módulo de Luz</span>
   </div>
 
-  <div>
     <h2>Luz:</h2>
         <table >
           <thead>
@@ -80,6 +82,8 @@
     <button id="updateLightsBtn" onclick="updateLights()" >Actualizar Luces</button>
 
   </div>
+
+  <br>
 
   <div id="Accs">
     <h2>Acceso:</h2>

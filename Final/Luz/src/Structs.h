@@ -60,17 +60,18 @@ struct lightDevice
   unsigned short pin;             //Pin del led
   char mode = autoMode;           // A=Auto, P=Presence, O=On, L=Off, B=Auto&Presence, T=Time
   short presencePin;     //Pin del sensor de presencia
-  unsigned short timeOn;          //lleva el tiempo que se encendio el dispositivo
+  unsigned long int timeOn;          //lleva el tiempo que se encendio el dispositivo
   bool state;                     //True=Encendido, False=Apagado
   char onDate[20];              //Fecha programada de encendido
   char offDate[20];             //Fecha programada de apagado
   char pMode=autoMode;
-  float desiredBrightness=110;
-  float defaultTimeOn=5000;
+  short desiredBrightness=110;
+  short defaultTimeOn=5000;
 };
 
 struct lightDevices{
   lightDevice lightDev[numLightDevices];
+  bool on = true;
 };
 
 extern lightDevices lightData;

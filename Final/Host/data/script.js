@@ -445,7 +445,67 @@ function updateLights() {
 }
 
 
-//Obtendra la temperatura cada 2s
+//Obtendra la temperatura y el Estado de la Luces cada 2s
 if (window.location.pathname === "/") {
     setInterval(getTempData, 2000);
+    setInterval(getLightsData, 2000);
+}
+
+
+function lightOff() {
+    // Enviar la petición GET con un header personalizado
+    fetch("http://192.168.31.191/api/Light/Mode", {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ on: false })
+    })
+        .then(response => response.json())
+        .then(data => console.log(data))
+        .catch(error => console.error('Error:', error));
+}
+
+function lightOn() {
+    // Enviar la petición GET con un header personalizado
+    fetch("http://192.168.31.191/api/Light/Mode", {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ on: true })
+    })
+        .then(response => response.json())
+        .then(data => console.log(data))
+        .catch(error => console.error('Error:', error));
+}
+
+function OnOffLight(){
+    if (toggleOnOffLight()) {
+        lightOn();
+    }
+    else {
+        lightOff();
+    }
+}
+
+function toggleOnOffLight() {
+    const checkbox = document.getElementById("toggleStateLight");
+    const div = document.getElementById("Light");
+    const excludeIds = ["toggleStateLight"];
+    const elements = div.querySelectorAll("input, button, select");
+
+    elements.forEach(el => {
+        if (!excludeIds.includes(el.id)) {
+            el.disabled = !checkbox.checked;
+    
+            if (!checkbox.checked) {
+                el.classList.add("disabled-style");
+            } else {
+                el.classList.remove("disabled-style");
+            }
+        }
+    });
+
+    return checkbox.checked;
 }

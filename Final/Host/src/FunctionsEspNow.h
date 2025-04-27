@@ -28,7 +28,8 @@ void sendData(uint8_t peerID, espNowData data)
 		esp_now_send(MACS[peerID], (uint8_t *)&data.temperatureModule, sizeof(tempDevice));
 		break;
 	case lightModule:
-		esp_now_send(MACS[peerID], (uint8_t *)&data.lightModule, sizeof(lightDevice) * 4);
+		printLightDevices(data.lightModule);
+		esp_now_send(MACS[peerID], (uint8_t *)&data.lightModule, sizeof(lightDevices));
 		break;
 	case accsModule:
 		esp_now_send(MACS[peerID], (uint8_t *)&data.accessModule, sizeof(accsDevice));

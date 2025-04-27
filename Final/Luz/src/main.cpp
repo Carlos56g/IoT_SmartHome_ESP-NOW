@@ -18,22 +18,29 @@ void initTCS();
 void initLightDevices();
 void controlLightsDevices();
 void validateTime(lightDevice &lightDevice);
+void turnOffLights(lightDevices &lightDevices);
+void turnOffLight(lightDevice &lightDevice);
+void turnOnLight(lightDevice &lightDevice);
 
 void setup()
 {
   Serial.begin(115200);
-  initTCS();
-  initLightDevices();
-  InitEspNow();
+  initTCS(); //Inicializar Sensor de Color
+  initLightDevices(); //Inicializa los dispositivos de luz con los parametros preEstablecidos
+  InitEspNow(); //Inicia la conexion ESPNOW
 }
 
 void loop()
 {
-  actualBrightness = getLuminosity(myTCS);
-  printLightDevices(lightData);
-  controlLightsDevices();
-  delay(1000);
+  if(lightData.on){
+    actualBrightness = getLuminosity(myTCS);
+    controlLightsDevices();
+  }
+  else{
+    turnOffLights(lightData);
+  }
 }
+
 void controlLightsDevices()
 {
   for (int i = 0; i < numLightDevices; i++)
@@ -47,45 +54,41 @@ void controlLight(float lux, lightDevice &lightDevice)
   switch (lightDevice.mode)
   {
   case on:
-    digitalWrite(lightDevice.pin, HIGH);
-    lightDevice.state = true;
+    turnOnLight(lightDevice);
     break;
+
   case off:
-    digitalWrite(lightDevice.pin, LOW);
-    lightDevice.state = false;
+    turnOffLight(lightDevice);
     break;
+    
   case presence:
     if (lightDevice.presencePin!=-1)
-    { // Primero debe de estar configurado como modo de presencia
-      if (digitalRead(lightDevice.presencePin) == LOW)
+    { // Primero debe de estar configurado un sensor de presencia pora poder usarse
+      if (digitalRead(lightDevice.presencePin)==LOW)
       { // Aseguramos que el pin de presencia haya detectado algo
         if (!lightDevice.state)
         { // Si no esta encendido
-          digitalWrite(lightDevice.pin, HIGH);
+          turnOnLight(lightDevice);
           lightDevice.timeOn = millis(); // Guardamos el momento en que se encendió
-          lightDevice.state = true;
         }
       }
-      if (lightDevice.state && millis() - lightDevice.timeOn >= lightDevice.defaultTimeOn)
+      if (lightDevice.state && millis() - lightDevice.timeOn >= lightDevice.defaultTimeOn) //Millis devuelve el tiempo que lleva prendido el ESP32, si está prendido, y el tiempo en que se encendio el LED-  TiempoActual es mayor que el tiempo configurado, apagarlo
       {
-        digitalWrite(lightDevice.pin, LOW);
-        lightDevice.state = false;
+        turnOffLight(lightDevice);
         lightDevice.timeOn = 0;
       }
+      if(lightDevice.timeOn==0) //Aseguramos que inicie siempre apagado cuando entre a este modo (Caso de cuando esta encendido y lo cambian a modo de presencia)
+        turnOffLight(lightDevice);
     }
     break;
+
   case autoMode:
-    if (lux < lightDevice.desiredBrightness)
-    {
-      digitalWrite(lightDevice.pin, HIGH);
-      lightDevice.state = true;
-    }
+    if (lux < lightDevice.desiredBrightness) //Si hay menos luz que la deseada, entonces
+      turnOnLight(lightDevice);
     else
-    {
-      digitalWrite(lightDevice.pin, LOW);
-      lightDevice.state = false;
-    }
+      turnOffLight(lightDevice);
     break;
+
   case presenceAndAuto:
     if (lightDevice.presencePin!=-1)
     { // Primero debe de estar configurado como modo de presencia
@@ -93,15 +96,13 @@ void controlLight(float lux, lightDevice &lightDevice)
       { // Aseguramos que el pin de presencia haya detectado algo
         if (!lightDevice.state)
         { // Si no esta encendido
-          digitalWrite(lightDevice.pin, HIGH);
+          turnOnLight(lightDevice);
           lightDevice.timeOn = millis(); // Guardamos el momento en que se encendió
-          lightDevice.state = true;
         }
       }
       if (lightDevice.state && millis() - lightDevice.timeOn >= lightDevice.defaultTimeOn)
       {
-        digitalWrite(lightDevice.pin, LOW);
-        lightDevice.state = false;
+        turnOffLight(lightDevice);
         lightDevice.timeOn = 0;
       }
       if (lightDevice.timeOn != 0)
@@ -109,13 +110,11 @@ void controlLight(float lux, lightDevice &lightDevice)
     }
     if (lux < lightDevice.desiredBrightness)
     {
-      digitalWrite(lightDevice.pin, HIGH);
-      lightDevice.state = true;
+      turnOnLight(lightDevice);
     }
     else
     {
-      digitalWrite(lightDevice.pin, LOW);
-      lightDevice.state = false;
+      turnOffLight(lightDevice);
     }
     break;
   }
@@ -125,7 +124,7 @@ void controlLight(float lux, lightDevice &lightDevice)
 
 void validateTime(lightDevice &lightDevice){
   struct tm actualTime;
-  if(strlen(lightDevice.onDate) > 0)//Encendido Automatico
+  if(strlen(lightDevice.onDate) > 0)//Encendido Automatico, ya que tiene configurada una fecha de encendido
   {
     while (!getLocalTime(&actualTime)) { //Obtenemos la fecha actual
       sendData(requestTime,lightData);
@@ -138,7 +137,7 @@ void validateTime(lightDevice &lightDevice){
     }
   }
 
-  if(strlen(lightDevice.offDate) > 0){
+  if(strlen(lightDevice.offDate) > 0){ //Apagado Automatico, ya que tiene configurada una fecha de apagado
     while (!getLocalTime(&actualTime)) { //Obtenemos la fecha actual
       sendData(requestTime,lightData);
       };
@@ -155,9 +154,9 @@ void validateTime(lightDevice &lightDevice){
 
 void initTCS()
 {
-  Wire.begin(SDA_PIN, SCL_PIN);
+  Wire.begin(SDA_PIN, SCL_PIN); //Inicializa el protocolo de comunicacion I2C
 
-  if (myTCS.begin())
+  if (myTCS.begin()) //Inicializa el Sensor
   {
     Serial.println("Found sensor");
   }
@@ -194,5 +193,31 @@ void initLightDevices()
     {
       pinMode(lightData.lightDev[i].presencePin, INPUT);
     }
+  }
+}
+
+
+
+void turnOffLights(lightDevices &lightDevices){
+  for(int i=0;i<numLightDevices;i++){
+    turnOffLight(lightDevices.lightDev[i]);
+  }
+}
+
+
+void turnOnLight(lightDevice &lightDevice){
+  if(!lightDevice.state){
+    digitalWrite(lightDevice.pin,HIGH);
+    lightDevice.state=true;
+    sendData(sendActualData,lightData); //Mandamos el nuevo Status SOLAMENTE SI HUBO CAMBIO
+  }
+}
+
+
+void turnOffLight(lightDevice &lightDevice){
+  if(lightDevice.state){
+    digitalWrite(lightDevice.pin,LOW);
+    lightDevice.state=false;
+    sendData(sendActualData,lightData); //Mandamos el nuevo Status SOLAMENTE SI HUBO CAMBIO
   }
 }

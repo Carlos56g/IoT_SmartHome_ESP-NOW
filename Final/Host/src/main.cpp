@@ -22,7 +22,7 @@ void setup()
     Serial.println("Error montando SPIFFS");
     return;
   }
-  printSPIIFFiles();
+  //printSPIIFFiles();
 
   // Servir el archivo index.html
   Server.on("/", HTTP_GET, [](AsyncWebServerRequest *request)
@@ -129,6 +129,25 @@ void setup()
     updateTempData(doc);
     sendData(tempModule, receivedData);
     request->send(200, "application/json", "{\"status\":\"ok\"}"); });
+
+    Server.on("/api/Light/Mode", HTTP_POST, [](AsyncWebServerRequest *request) {}, NULL, [](AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total)
+            {
+    String body = String((char*)data).substring(0, len);
+    JsonDocument doc;
+    DeserializationError error = deserializeJson(doc, body);
+
+    if(doc["on"]){
+      Serial.println("Encender Modulo");
+      receivedData.lightModule.on=true;
+    }
+    else{
+      Serial.println("Apagar Modulo");
+      receivedData.lightModule.on=false;
+    }
+    
+    sendData(lightModule, receivedData);
+    request->send(200, "application/json", "{\"status\":\"ok\"}"); });
+
 
   Server.on("/api/Lights/Update", HTTP_POST, [](AsyncWebServerRequest *request) {}, NULL, [](AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total)
             {

@@ -118,7 +118,7 @@ void printAccsHistory(std::list<accsEvent> accsHistory)
 void getDateServer(char *date, size_t size)
 {
   const char *ntpServer = "pool.ntp.org";
-  const long gmtOffset_sec = 0;        // Offset horario GMT (0 para UTC)
+  const long gmtOffset_sec =  -6 * 3600; // Offset para UTC-6
   const int daylightOffset_sec = 3600; // Ajuste de horario de verano (si aplica)
   struct tm timeInfo;
 
@@ -127,6 +127,7 @@ void getDateServer(char *date, size_t size)
   if (!getLocalTime(&timeInfo))
   {
     Serial.println("Error al obtener la hora");
+    controlStatusLED(ERROR);
     snprintf(date, size, "Error");
     return;
   }

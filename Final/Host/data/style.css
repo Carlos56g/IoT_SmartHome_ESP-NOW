@@ -33,6 +33,10 @@ body {
     text-align: center;
   }
 
+  a{
+    text-decoration: none; color: inherit;
+  }
+
 
 
 /* CSS */
@@ -165,6 +169,13 @@ button:disabled {
   .disabled-style {
     opacity: 0.5;
     cursor: not-allowed;
+
+    /* evita que haga clic incluso si el estilo lo permite */
+  }
+
+  .enabled-style {
+    opacity: 1;
+    cursor: auto;
     /* evita que haga clic incluso si el estilo lo permite */
   }
 
@@ -184,7 +195,7 @@ button:disabled {
     border-color: #333;
   }
 
-  .costum-input {
+  .custom-input {
     width: 40%;
     padding: 10px 20px;
     border-radius: 6px;
@@ -204,5 +215,40 @@ button:disabled {
 
   }
 
+  .home {
+    position: fixed;
+    top: 10px;
+    left: 10px;
+    z-index: 1000;
+  }
 
+  .home button {
+    padding: 10px;
+    font-size: 18px; /* Tamaño del ícono */
+    background-color: 158cc3;
+    color: white;
+    border: none;
+    border-radius: 50%; /* Botón circular */
+    cursor: pointer;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .home button:hover {
+    background-color: #32ace4;
+  }
+
+  .home i {
+    font-size: 20px; /* Tamaño del ícono */
+  }
+
+  .custom-table {
+    width: 100%;
+    font-size: 16px;
+    color: #333;
+    outline: none;
+    background-size: 10px 10px;
+  }
 

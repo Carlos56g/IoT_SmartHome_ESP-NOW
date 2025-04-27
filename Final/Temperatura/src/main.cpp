@@ -17,6 +17,7 @@ char prevStatus;
 Adafruit_BMP280 myBMP; // Presion Atm
 AHT20 myAHT20;         // Temperatura y Humedad
 tempDevice tempData;
+statusLED led;
 
 // Funciones
 char validateDesiredTemperature();
@@ -29,17 +30,18 @@ void controlTempProgram();
 
 void setup()
 {
+  initializeLED();
+  controlStatusLED(WAITING);
   Serial.begin(115200);
   initAHT20();
   InitEspNow();
   initPins();
+  controlStatusLED(CLEAR);
 }
 
 void loop()
 {
   controlTempProgram();
-  printTempDevice(tempData);
-  delay(1000);
 }
 
 char validateDesiredTemperature()
@@ -57,6 +59,7 @@ void controlTemperatureModule()
 {
   if (tempData.status != off)
   {
+    controlStatusLED(CLEAR);
     switch (tempData.mode)
     {
     case off:
@@ -82,8 +85,10 @@ void controlTemperatureModule()
       break;
     }
   }
-  else
+  else{
+    controlStatusLED(OFF);
     controlTempDevice(off);
+  }
 }
 
 void initAHT20()
@@ -132,24 +137,28 @@ void controlTempDevice(char mode)
     digitalWrite(fanC, LOW);
     digitalWrite(fanH, LOW);
     digitalWrite(peltier, HIGH);
+    controlStatusLED(PELTIEROFF);
     break;
 
   case cold:
     digitalWrite(fanC, HIGH);
     digitalWrite(fanH, LOW);
     digitalWrite(peltier, LOW);
+    controlStatusLED(PELTIERON);
     break;
 
   case hot:
     digitalWrite(fanC, LOW);
     digitalWrite(fanH, HIGH);
     digitalWrite(peltier, LOW);
+    controlStatusLED(PELTIERON);
     break;
 
   case air:
     digitalWrite(fanH, HIGH);
     digitalWrite(fanC, HIGH);
     digitalWrite(peltier, HIGH);
+    controlStatusLED(PELTIEROFF);
     break;
 
   case off:
@@ -195,8 +204,5 @@ void controlTempProgram(){
 
   char buffer[25];
   strftime(buffer, sizeof(buffer), "%Y-%m-%dT%H:%M:%S", &actualTime);
-  Serial.println("Fecha Actual:");
-  Serial.println(buffer);
-
   controlTemperatureModule();
 }

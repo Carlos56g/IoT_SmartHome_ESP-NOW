@@ -5,51 +5,93 @@
 #include <Arduino.h>
 #include "FunctionsEspNow.h"
 
-void printAccsDevice(const accsDevice& device) {
+void printAccsDevice(const accsDevice &device)
+{
   Serial.println("----- accsDevice Info -----");
 
   Serial.print("Key: ");
   Serial.println(device.key);
 
   Serial.print("Mode: ");
-  switch (device.mode) {
-    case AccsNFC: Serial.println("AccsNFC"); break;
-    case accsOpen: Serial.println("accsOpen"); break;
-    case accsClose: Serial.println("accsClose"); break;
-    case off: Serial.println("off"); break;
-    case on: Serial.println("on"); break;
-    case createKey: Serial.println("createKey"); break;
-    default: Serial.print("Unknown ("); Serial.print(device.mode); Serial.println(")"); break;
+  switch (device.mode)
+  {
+  case AccsNFC:
+    Serial.println("AccsNFC");
+    break;
+  case accsOpen:
+    Serial.println("accsOpen");
+    break;
+  case accsClose:
+    Serial.println("accsClose");
+    break;
+  case off:
+    Serial.println("off");
+    break;
+  case on:
+    Serial.println("on");
+    break;
+  case createKey:
+    Serial.println("createKey");
+    break;
+  default:
+    Serial.print("Unknown (");
+    Serial.print(device.mode);
+    Serial.println(")");
+    break;
   }
 
   Serial.print("Status: ");
-  switch (device.status) {
-    case accept: Serial.println("accept"); break;
-    case deny: Serial.println("deny"); break;
-    case waitingNewKey: Serial.println("waitingNewKey"); break;
-    case userRegistered: Serial.println("userRegistered"); break;
-    case accsOpen: Serial.println("accsOpen"); break;
-    case accsClose: Serial.println("accsClose"); break;
-    case on: Serial.println("on"); break;
-    case off: Serial.println("off"); break;
+  switch (device.status)
+  {
+  case accept:
+    Serial.println("accept");
+    break;
+  case deny:
+    Serial.println("deny");
+    break;
+  case waitingNewKey:
+    Serial.println("waitingNewKey");
+    break;
+  case userRegistered:
+    Serial.println("userRegistered");
+    break;
+  case accsOpen:
+    Serial.println("accsOpen");
+    break;
+  case accsClose:
+    Serial.println("accsClose");
+    break;
+  case on:
+    Serial.println("on");
+    break;
+  case off:
+    Serial.println("off");
+    break;
 
-    default: Serial.print("Unknown ("); Serial.print(device.status); Serial.println(")"); break;
+  default:
+    Serial.print("Unknown (");
+    Serial.print(device.status);
+    Serial.println(")");
+    break;
   }
 
   Serial.print("Date: ");
   Serial.println(device.date);
 
   Serial.println("Stored Keys:");
-  for (int i = 0; i < MAX_KEYS_NUM; i++) {
-    if (device.keys[i][0] != '\0') { // Solo imprime si hay algo
-      Serial.print("  ["); Serial.print(i); Serial.print("] ");
+  for (int i = 0; i < MAX_KEYS_NUM; i++)
+  {
+    if (device.keys[i][0] != '\0')
+    { // Solo imprime si hay algo
+      Serial.print("  [");
+      Serial.print(i);
+      Serial.print("] ");
       Serial.println(device.keys[i]);
     }
   }
 
   Serial.println("---------------------------");
 }
-
 
 void setDateServer(char *date, size_t size)
 {
@@ -183,7 +225,79 @@ void saveKey(char *key)
   readKeys();
 }
 
+void initializeLED()
+{
+  ledcSetup(led.bluePwm, 5000, 8);
+  ledcAttachPin(led.bluePin, led.bluePwm);
+  ledcSetup(led.greenPwm, 5000, 8);
+  ledcAttachPin(led.greenPin, led.greenPwm);
+  ledcSetup(led.red, 5000, 8);
+  ledcAttachPin(led.redPin, led.redPwm);
 
+  ledcWrite(led.bluePwm, 255);
+  delay(500);
+  ledcWrite(led.bluePwm, 0);
+  ledcWrite(led.greenPwm, 255);
+  delay(500);
+  ledcWrite(led.greenPwm, 0);
+  ledcWrite(led.redPwm, 255);
+  delay(500);
+  ledcWrite(led.redPwm, 0);
+}
 
+void controlStatusLED(char state)
+{
+  switch (state)
+  {
+  case CLEAR:                     // '1'
+    ledcWrite(led.greenPwm, 255); // Verde fuerte
+    ledcWrite(led.redPwm, 0);
+    ledcWrite(led.bluePwm, 0);
+    break;
+
+  case ERROR:                   // '2'
+    ledcWrite(led.redPwm, 255); // Rojo fuerte
+    ledcWrite(led.greenPwm, 0);
+    ledcWrite(led.bluePwm, 0);
+    break;
+
+  case WAITING:                  // '3'
+    ledcWrite(led.bluePwm, 255); // Azul fuerte
+    ledcWrite(led.redPwm, 0);
+    ledcWrite(led.greenPwm, 0);
+    break;
+
+  case DENIED:                  // '4'
+    ledcWrite(led.redPwm, 255); // Naranja (Rojo fuerte + Verde medio)
+    ledcWrite(led.greenPwm, 128);
+    ledcWrite(led.bluePwm, 0);
+    break;
+
+  case ACEPTED:                  // '5'
+    ledcWrite(led.bluePwm, 255); // Violeta (Azul + Rojo medio)
+    ledcWrite(led.redPwm, 128);
+    ledcWrite(led.greenPwm, 0);
+    break;
+
+  case DATASENDED:                // '6'
+    ledcWrite(led.greenPwm, 255); // Amarillo (Rojo medio + Verde fuerte)
+    ledcWrite(led.redPwm, 128);
+    ledcWrite(led.bluePwm, 0);
+    break;
+
+  case DATARECEIVED:              // '7'
+    ledcWrite(led.greenPwm, 255); // Cian (Verde + Azul fuerte)
+    ledcWrite(led.bluePwm, 255);
+    ledcWrite(led.redPwm, 0);
+    break;
+
+  case OFF:
+    // Apagar el LED si el estado no se reconoce
+    ledcWrite(led.redPwm, 0);
+    ledcWrite(led.greenPwm, 0);
+    ledcWrite(led.bluePwm, 0);
+    break;
+  }
+}
 
 #endif

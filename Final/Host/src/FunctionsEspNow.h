@@ -9,14 +9,13 @@
 #include "Structs.h"
 #include "UtilitiesFunctions.h"
 
-
 void sendDate(int peekID);
 
 // Se ejecutará cada que se ENVIEN datos con ESP-NOW
 void onDataSent(const uint8_t *mac_addr, esp_now_send_status_t status)
 {
-	Serial.print("\r\nLast Packet Send Status:\t");
-	Serial.println(status == ESP_NOW_SEND_SUCCESS ? "Delivery Success" : "Delivery Fail");
+	if (status == ESP_NOW_SEND_SUCCESS)
+		controlStatusLED(CLEAR);
 }
 
 // Envia un Mensaje por medio de ESP-NOW con el ID especificado
@@ -25,17 +24,19 @@ void sendData(uint8_t peerID, espNowData data)
 	switch (peerID)
 	{
 	case tempModule:
+		controlStatusLED(SENDTEMP);
 		esp_now_send(MACS[peerID], (uint8_t *)&data.temperatureModule, sizeof(tempDevice));
 		break;
 	case lightModule:
-		printLightDevices(data.lightModule);
+		controlStatusLED(SENDLIGHT);
 		esp_now_send(MACS[peerID], (uint8_t *)&data.lightModule, sizeof(lightDevices));
 		break;
 	case accsModule:
+		controlStatusLED(SENDACCS);
 		esp_now_send(MACS[peerID], (uint8_t *)&data.accessModule, sizeof(accsDevice));
-		Serial.println(sizeof(data.accessModule));
 		break;
 	default:
+		controlStatusLED(ERROR);
 		Serial.println("ID INVALIDO");
 		break;
 	}
@@ -60,6 +61,7 @@ int searchSender(const uint8_t *mac)
 		if (areMacEquals(mac, MACS[senderID]))
 			return senderID;
 	}
+	controlStatusLED(ERROR);
 	return -1;
 }
 
@@ -69,45 +71,59 @@ void onDataReceived(const uint8_t *mac, const uint8_t *data, int len)
 	Serial.printf("Bytes received: %d\n", len);
 
 	int senderID = searchSender(mac); // Busca el ID del emisor
-	
-	if(len==sizeof(char)){ //Primero validamos si no es una peticion de parte de un Modulo
-		char actionR=data[0];
+
+	if (len == sizeof(char))
+	{ // Primero validamos si no es una peticion de parte de un Modulo
+		char actionR = data[0];
 		switch (actionR)
 		{
-		case requestTime: //Peticion para dar la fecha
+		case requestTime: // Peticion para dar la fecha
+			switch (senderID)
+			{
+			case accsModule:
+				controlStatusLED(RECEIVEDACCS);
+				break;
+			case lightModule:
+				controlStatusLED(RECEIVEDLIGHT);
+				break;
+			case tempModule:
+				controlStatusLED(RECEIVEDTEMP);
+				break;
+			}
 			sendDate(senderID);
 			break;
-		
 		default:
 			break;
 		}
 		return;
 	}
 
-	switch (senderID) //Sino, copiamos los datos en la estructura del Host de acuerdo al origen
+	switch (senderID) // Sino, copiamos los datos en la estructura del Host de acuerdo al origen
 	{
 	case tempModule: // Temp
+		controlStatusLED(RECEIVEDTEMP);
 		memcpy(&receivedData.temperatureModule, data, sizeof(tempDevice));
 		break;
 	case lightModule: // Luz
+		controlStatusLED(RECEIVEDLIGHT);
 		memcpy(&receivedData.lightModule, data, sizeof(lightDevices));
 		break;
 	case accsModule: // Accs
-		memcpy(&receivedData.accessModule, data, sizeof(accsDevice));	//Copiamos los datos recividos a la variable global
-		getActualDate(receivedData.accessModule.date,sizeof(receivedData.accessModule.date)); //Actualizamos la fecha de los datos
-		accsEvent accsHistoryData; //Creamos una nueva variable para almacenar el acceso recibido
-		strcpy(accsHistoryData.key,receivedData.accessModule.key); // llenamos el struct
-		strcpy(accsHistoryData.date,receivedData.accessModule.date);
-		printAccsDevice(receivedData.accessModule);
-		accsHistoryData.status=receivedData.accessModule.status;
-		saveAccsHistory(accsHistoryData); //Lo guardamos en el almacenamiento interno del ESP32
-		
+		controlStatusLED(RECEIVEDACCS);
+		memcpy(&receivedData.accessModule, data, sizeof(accsDevice));						   // Copiamos los datos recividos a la variable global
+		getActualDate(receivedData.accessModule.date, sizeof(receivedData.accessModule.date)); // Actualizamos la fecha de los datos
+		accsEvent accsHistoryData;															   // Creamos una nueva variable para almacenar el acceso recibido
+		strcpy(accsHistoryData.key, receivedData.accessModule.key);							   // llenamos el struct
+		strcpy(accsHistoryData.date, receivedData.accessModule.date);
+		accsHistoryData.status = receivedData.accessModule.status;
+		saveAccsHistory(accsHistoryData); // Lo guardamos en el almacenamiento interno del ESP32
+		newAccsAction = true;
 		break;
 	default:
 		Serial.println("ID INVALIDO");
+		controlStatusLED(ERROR);
 		break;
 	}
-	printLightDevices(receivedData.lightModule);
 }
 
 // Registra un dispositivo a la red de ESP-NOW con el ID especificado
@@ -136,13 +152,14 @@ void static registerPeeks()
 	for (auto peekID = 0; peekID < MACS_COUNT; peekID++)
 	{
 		registerPeek(peekID, WIFI_IF_STA); // HOST
-		// RegisterPeek(peek_id, WIFI_IF_AP); //MODULO
+										   // RegisterPeek(peek_id, WIFI_IF_AP); //MODULO
 	}
 }
 
-void sendDate(int peekID){
+void sendDate(int peekID)
+{
 	char date[20];
-	getDateServer(date,sizeof(date));
+	getDateServer(date, sizeof(date));
 	Serial.println("date:");
 	Serial.println(date);
 	Serial.println("sizeof():");
@@ -153,6 +170,7 @@ void sendDate(int peekID){
 // Inicializa ESP-NOW
 void static initEspNow()
 {
+	controlStatusLED(WAITING);
 	WiFi.mode(WIFI_AP_STA); // Modo AP y Station HOST
 	// WiFi.mode(WIFI_AP); //Modo AP MODULO
 	// esp_wifi_set_channel(10, WIFI_SECOND_CHAN_NONE);
@@ -170,12 +188,14 @@ void static initEspNow()
 	if (esp_now_init() != ESP_OK)
 	{
 		Serial.println("Error initializing ESP-NOW");
+		controlStatusLED(ERROR);
 	}
 	else
 	{
 		esp_now_register_send_cb(onDataSent);
 		esp_now_register_recv_cb(onDataReceived);
 		registerPeeks();
+		controlStatusLED(CLEAR);
 	}
 	for (int peekID = 0; peekID < MACS_COUNT; peekID++)
 	{
@@ -183,8 +203,9 @@ void static initEspNow()
 	}
 }
 
-void requestModule(int peerID, char action){						//ACCESO: K=Eliminar LLaves, D=Request Data
-	esp_now_send(MACS[peerID],(uint8_t *)&action, sizeof(char));
+void requestModule(int peerID, char action)
+{ // ACCESO: K=Eliminar LLaves, D=Request Data
+	esp_now_send(MACS[peerID], (uint8_t *)&action, sizeof(char));
 }
 
 #endif

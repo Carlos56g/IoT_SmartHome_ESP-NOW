@@ -4,7 +4,7 @@
 #include "Structs.h"
 #include <Arduino.h>
 #include "FunctionsEspNow.h"
-#include <Wire.h>            //Libreria para I2C
+#include <Wire.h> //Libreria para I2C
 
 void setDateString(char *date)
 {
@@ -39,18 +39,19 @@ void setDateString(char *date)
   Serial.println(date);
 }
 
-tm convertStringToTm(char* date){
+tm convertStringToTm(char *date)
+{
   tm timeInfo;
   memset(&timeInfo, 0, sizeof(timeInfo));
 
   sscanf(date, "%d-%d-%dT%d:%d:%d",
-    &timeInfo.tm_year, &timeInfo.tm_mon, &timeInfo.tm_mday,
-    &timeInfo.tm_hour, &timeInfo.tm_min, &timeInfo.tm_sec);
-    
-    timeInfo.tm_year -= 1900; // tm_year = años desde 1900
-    timeInfo.tm_mon -= 1;     // tm_mon es 0-11
+         &timeInfo.tm_year, &timeInfo.tm_mon, &timeInfo.tm_mday,
+         &timeInfo.tm_hour, &timeInfo.tm_min, &timeInfo.tm_sec);
 
-    return timeInfo;
+  timeInfo.tm_year -= 1900; // tm_year = años desde 1900
+  timeInfo.tm_mon -= 1;     // tm_mon es 0-11
+
+  return timeInfo;
 }
 
 void printColorSensorInfo(Adafruit_TCS34725 &tcs)
@@ -88,29 +89,31 @@ int getLuminosity(Adafruit_TCS34725 &tcs)
   return lux;
 }
 
-void printLightDevices(const lightDevices& devices) {
-  for (int i = 0; i < numLightDevices; i++) {
+void printLightDevices(const lightDevices &devices)
+{
+  for (int i = 0; i < numLightDevices; i++)
+  {
     Serial.print("Dispositivo ");
     Serial.println(i + 1);
-    
+
     Serial.print("  Pin LED: ");
     Serial.println(devices.lightDev[i].pin);
-    
+
     Serial.print("  Modo: ");
     Serial.println(devices.lightDev[i].mode);
-    
+
     Serial.print("  Pin de presencia: ");
     Serial.println(devices.lightDev[i].presencePin);
-    
+
     Serial.print("  Tiempo encendido (ms): ");
     Serial.println(devices.lightDev[i].timeOn);
-    
+
     Serial.print("  Estado (1=Encendido, 0=Apagado): ");
     Serial.println(devices.lightDev[i].state);
-    
+
     Serial.print("  Fecha ON: ");
     Serial.println(devices.lightDev[i].onDate);
-    
+
     Serial.print("  Fecha OFF: ");
     Serial.println(devices.lightDev[i].offDate);
 
@@ -122,8 +125,83 @@ void printLightDevices(const lightDevices& devices) {
 
     Serial.print("  Tiempo encendido por defecto (ms): ");
     Serial.println(devices.lightDev[i].defaultTimeOn);
-    
+
     Serial.println("-----------------------------------");
+  }
+}
+
+void initializeLED()
+{
+  ledcSetup(led.bluePwm, 5000, 8);
+  ledcAttachPin(led.bluePin, led.bluePwm);
+  ledcSetup(led.greenPwm, 5000, 8);
+  ledcAttachPin(led.greenPin, led.greenPwm);
+  ledcSetup(led.red, 5000, 8);
+  ledcAttachPin(led.redPin, led.redPwm);
+
+  ledcWrite(led.bluePwm, 255);
+  delay(500);
+  ledcWrite(led.bluePwm, 0);
+  ledcWrite(led.greenPwm, 255);
+  delay(500);
+  ledcWrite(led.greenPwm, 0);
+  ledcWrite(led.redPwm, 255);
+  delay(500);
+  ledcWrite(led.redPwm, 0);
+}
+
+void controlStatusLED(char state)
+{
+  switch (state)
+  {
+  case CLEAR:                     // '1'
+    ledcWrite(led.greenPwm, 255); // Verde fuerte
+    ledcWrite(led.redPwm, 0);
+    ledcWrite(led.bluePwm, 0);
+    break;
+
+  case ERROR:                   // '2'
+    ledcWrite(led.redPwm, 255); // Rojo fuerte
+    ledcWrite(led.greenPwm, 0);
+    ledcWrite(led.bluePwm, 0);
+    break;
+
+  case WAITING:                  // '3'
+    ledcWrite(led.bluePwm, 255); // Azul fuerte
+    ledcWrite(led.redPwm, 0);
+    ledcWrite(led.greenPwm, 0);
+    break;
+
+  case DENIED:                  // '4'
+    ledcWrite(led.redPwm, 255); // Naranja (Rojo fuerte + Verde medio)
+    ledcWrite(led.greenPwm, 128);
+    ledcWrite(led.bluePwm, 0);
+    break;
+
+  case ACEPTED:                  // '5'
+    ledcWrite(led.bluePwm, 255); // Violeta (Azul + Rojo medio)
+    ledcWrite(led.redPwm, 128);
+    ledcWrite(led.greenPwm, 0);
+    break;
+
+  case DATASENDED:                // '6'
+    ledcWrite(led.greenPwm, 255); // Amarillo (Rojo medio + Verde fuerte)
+    ledcWrite(led.redPwm, 128);
+    ledcWrite(led.bluePwm, 0);
+    break;
+
+  case DATARECEIVED:              // '7'
+    ledcWrite(led.greenPwm, 255); // Cian (Verde + Azul fuerte)
+    ledcWrite(led.bluePwm, 255);
+    ledcWrite(led.redPwm, 0);
+    break;
+    
+  case OFF:
+    // Apagar el LED si el estado no se reconoce
+    ledcWrite(led.redPwm, 0);
+    ledcWrite(led.greenPwm, 0);
+    ledcWrite(led.bluePwm, 0);
+    break;
   }
 }
 

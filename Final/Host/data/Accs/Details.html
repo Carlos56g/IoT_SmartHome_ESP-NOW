@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="UTF-8">
+  <title>Smart Home</title>
+  <link rel="stylesheet" href="../style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cal+Sans&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Lexend:wght@100..900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+</head>
+
+<body onload="getAccsData()">
+
+  <a href="/" class="home">
+    <button>
+      <i class="fa fa-home"></i>
+    </button>
+  </a>
+
+  <div id="Accs">
+    <h1>Acceso</h1>
+    <div class="checkbox-wrapper-5">
+      <div class="check">
+        <input type="checkbox" id="OnOffAccs" checked onchange="OnOffAccs()">
+        <label for="toggleStateLight"></label>
+      </div>
+    </div>
+
+    <div id="InfoPanel">
+      <h2>Ultimo Acceso: </h2>
+      <div id="accsKey"></div>
+      <h2>Status: </h2>
+      <div id="accsStatus"></div>
+      <h2>Fecha: </h2>
+      <div id="accsDate"></div>
+      <h2>Modo actual: </h2>
+      <div id="accsMode"></div>
+    </div>
+    
+    
+    <div class="checkbox-wrapper-5">
+      <h3>Crear LLave:</h3>
+      <div class="check">
+        <input type="checkbox" id="toggleCreateKey" checked onchange="toggleCreateKeyAccs()">
+        <label for="toggleStateLight"></label>
+      </div>
+    </div>
+
+    <br>
+
+    <input type="text" maxlength="15" id="accsKeyInput" class="custom-input" maxlength="16">
+    <br><br>
+    <button id="accsKeyButton" onclick="accsCreateKey()" >Crear Llave!</button>
+    <br><br>
+    <button id="accsOpenButton" onclick="accsOpen()">Abir Acceso</button>
+    <button id="accsCloseButton" onclick="accsClose()">Cerrar Acceso</button>
+
+    <a href="/Accs/History">
+      <button id="goToHistoryBtn">Ver Historial</button>
+    </a>
+
+    <a href="/Accs/Keys">
+      <button id="goToKeysBtn">Administrar llaves</button>
+    </a>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+
+</html>

@@ -5,7 +5,8 @@ enum ESPNowActions {
   deleteData = 'A',
   requestData = 'B',
   requestTime = 'C',
-  sendActualData = 'M'
+  sendActualData = 'M',
+  restart = 'Z'
 }; 
 
 enum ModulesID {
@@ -39,6 +40,16 @@ enum tempModes{
   air = 'R',
 };
 
+enum ledStatus {
+  CLEAR = '1',
+  ERROR = '2',
+  WAITING = '3',
+  PELTIERON = '4',
+  PELTIEROFF = '5',
+  DATARECEIVED = '6',
+  DATASENDED = '7',
+  OFF = '8' 
+}; 
 
 struct tempDeviceProgram{
   char mode = autoMode;                     //En que modo se activará?
@@ -58,6 +69,19 @@ struct tempDevice
   tempDeviceProgram tempDataProg;
 };
 
+struct statusLED{
+  short redPin = 13;
+  short bluePin = 14;
+  short greenPin = 12;
+  short redPwm = 1;
+  short bluePwm = 2;
+  short greenPwm = 3;
+  short red = 0;
+  short blue = 0;
+  short green = 0;
+};
+
+extern statusLED led;
 
 extern tempDevice tempData;                 //Variable Global para acceder en cualquier archivo/funcion del proyecto
 

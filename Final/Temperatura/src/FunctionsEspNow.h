@@ -12,13 +12,16 @@
 // Se ejecutará cada que se ENVIEN datos con ESP-NOW
 void onDataSent(const uint8_t *mac_addr, esp_now_send_status_t status)
 {
-	Serial.print("\r\nLast Packet Send Status:\t");
-	Serial.println(status == ESP_NOW_SEND_SUCCESS ? "Delivery Success" : "Delivery Fail");
+	if (status == ESP_NOW_SEND_SUCCESS)
+		controlStatusLED(CLEAR);
+	else
+		controlStatusLED(ERROR);
 }
 
 // Envia un Mensaje por medio de ESP-NOW al Host con la accion Especificada
 void sendData(char action, tempDevice data)
 {
+	controlStatusLED(DATASENDED);
 	switch (action)
 	{
 	case sendActualData: // Data
@@ -57,6 +60,7 @@ int searchSender(const uint8_t *mac)
 
 void onDataReceived(const uint8_t *mac, const uint8_t *data, int len)
 {
+	controlStatusLED(DATARECEIVED);
 	Serial.printf("Packet received from: %02X:%02X:%02X:%02X:%02X:%02X\n", mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]);
 	Serial.printf("Bytes received: %d\n", len);
 
@@ -65,23 +69,26 @@ void onDataReceived(const uint8_t *mac, const uint8_t *data, int len)
 
 	if (senderID == 0)
 	{
-		if (len == sizeof(char)) //Simpre que sea de tipo accion, despues de modificar los datos, se le mandara al Host de Vuelta
+		if (len == sizeof(char)) // Simpre que sea de tipo accion, despues de modificar los datos, se le mandara al Host de Vuelta
 		{
 			char action = data[0];
 			switch (action)
 			{
-			case deleteData: // Eliminar toda la informacion del Struct y los archivos internos
-				memset(&tempData, 0, sizeof(tempDevice)); //Borra todo el struct
-				tempData.mode=deleteData;
+			case deleteData:							  // Eliminar toda la informacion del Struct y los archivos internos
+				memset(&tempData, 0, sizeof(tempDevice)); // Borra todo el struct
+				tempData.mode = deleteData;
 				break;
 
-			case requestData: // Request Data
-				sendData(sendActualData, tempData); //Mandamos los Datos de Vuelta
+			case requestData:						// Request Data
+				sendData(sendActualData, tempData); // Mandamos los Datos de Vuelta
 				break;
+
+			case restart:
+				ESP.restart();
 
 			default:
-				return; //Accion Invalida para el Modulo de Acceso!
-			break;
+				return; // Accion Invalida para el Modulo de Acceso!
+				break;
 			}
 		}
 		// SOLO PUEDE RECIBIR DEL HOST
@@ -138,11 +145,13 @@ void getActualDate(char *date, size_t size)
 	short tries;
 	while (!getLocalTime(&timeInfo))
 	{
+		controlStatusLED(WAITING);
 		Serial.println("Error al obtener la hora");
-		sendData(requestTime, tempData); //Mandamos una peticion al Host para que nos de la fecha Actual
+		sendData(requestTime, tempData); // Mandamos una peticion al Host para que nos de la fecha Actual
 		delay(1000);
 		if (tries > 10)
 		{
+			controlStatusLED(ERROR);
 			Serial.println("No fue posible obtener la fecha por parte del host");
 			return;
 		}
@@ -160,6 +169,7 @@ void static InitEspNow()
 	if (esp_now_init() != ESP_OK)
 	{
 		Serial.println("Error initializing ESP-NOW");
+		controlStatusLED(ERROR);
 	}
 	else
 	{

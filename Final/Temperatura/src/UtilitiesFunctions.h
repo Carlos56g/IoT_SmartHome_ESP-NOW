@@ -11,6 +11,8 @@
 #define SDA_PIN 21
 #define SCL_PIN 22
 
+void controlStatusLED(char state);
+
 void printTempDevice(const tempDevice& device) {
   Serial.println("===== tempDevice Info =====");
 
@@ -64,6 +66,7 @@ void setDateString(char *date)
              &timeinfo.tm_hour, &timeinfo.tm_min, &timeinfo.tm_sec) != 6)
   {
     Serial.println("Error al parsear la fecha");
+    controlStatusLED(ERROR);
     return;
   }
 
@@ -94,6 +97,81 @@ tm convertStringToTm(char* date){
     timeInfo.tm_mon -= 1;     // tm_mon es 0-11
 
     return timeInfo;
+}
+
+void initializeLED()
+{
+  ledcSetup(led.bluePwm, 5000, 8);
+  ledcAttachPin(led.bluePin, led.bluePwm);
+  ledcSetup(led.greenPwm, 5000, 8);
+  ledcAttachPin(led.greenPin, led.greenPwm);
+  ledcSetup(led.red, 5000, 8);
+  ledcAttachPin(led.redPin, led.redPwm);
+
+  ledcWrite(led.bluePwm, 255);
+  delay(500);
+  ledcWrite(led.bluePwm, 0);
+  ledcWrite(led.greenPwm, 255);
+  delay(500);
+  ledcWrite(led.greenPwm, 0);
+  ledcWrite(led.redPwm, 255);
+  delay(500);
+  ledcWrite(led.redPwm, 0);
+}
+
+void controlStatusLED(char state)
+{
+  switch (state)
+  {
+  case CLEAR:                     // '1'
+    ledcWrite(led.greenPwm, 255); // Verde fuerte
+    ledcWrite(led.redPwm, 0);
+    ledcWrite(led.bluePwm, 0);
+    break;
+
+  case ERROR:                   // '2'
+    ledcWrite(led.redPwm, 255); // Rojo fuerte
+    ledcWrite(led.greenPwm, 0);
+    ledcWrite(led.bluePwm, 0);
+    break;
+
+  case WAITING:                  // '3'
+    ledcWrite(led.bluePwm, 255); // Azul fuerte
+    ledcWrite(led.redPwm, 0);
+    ledcWrite(led.greenPwm, 0);
+    break;
+
+  case PELTIERON:               // '4'
+    ledcWrite(led.redPwm, 255); // Naranja (Rojo fuerte + Verde medio)
+    ledcWrite(led.greenPwm, 128);
+    ledcWrite(led.bluePwm, 0);
+    break;
+
+  case PELTIEROFF:                 // '5'
+    ledcWrite(led.bluePwm, 255); // Violeta (Azul + Rojo medio)
+    ledcWrite(led.redPwm, 128);
+    ledcWrite(led.greenPwm, 0);
+    break;
+
+  case DATASENDED: // '6'
+    ledcWrite(led.greenPwm, 255);  // Amarillo (Rojo medio + Verde fuerte)
+    ledcWrite(led.redPwm, 128);
+    ledcWrite(led.bluePwm, 0);
+    break;
+
+  case DATARECEIVED: // '7'
+    ledcWrite(led.greenPwm, 255);  // Cian (Verde + Azul fuerte)
+    ledcWrite(led.bluePwm, 255);
+    ledcWrite(led.redPwm, 0);
+    break;
+
+  case OFF:
+    // Apagar el LED si el estado no se reconoce
+    ledcWrite(led.redPwm, 0);
+    ledcWrite(led.greenPwm, 0);
+    ledcWrite(led.bluePwm, 0);
+    break;
+  }
 }
 
 

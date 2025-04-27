@@ -7,6 +7,7 @@
 
 lightDevices lightData;
 float actualBrightness;
+statusLED led;
 
 // Objeto de tipo sensor de Luz
 Adafruit_TCS34725 myTCS = Adafruit_TCS34725(TCS34725_INTEGRATIONTIME_614MS, TCS34725_GAIN_1X);
@@ -24,10 +25,13 @@ void turnOnLight(lightDevice &lightDevice);
 
 void setup()
 {
+  initializeLED();
+  controlStatusLED(WAITING);
   Serial.begin(115200);
   initTCS(); //Inicializar Sensor de Color
   initLightDevices(); //Inicializa los dispositivos de luz con los parametros preEstablecidos
   InitEspNow(); //Inicia la conexion ESPNOW
+  controlStatusLED(CLEAR);
 }
 
 void loop()
@@ -35,9 +39,11 @@ void loop()
   if(lightData.on){
     actualBrightness = getLuminosity(myTCS);
     controlLightsDevices();
+    controlStatusLED(CLEAR);
   }
   else{
     turnOffLights(lightData);
+    controlStatusLED(OFF);
   }
 }
 

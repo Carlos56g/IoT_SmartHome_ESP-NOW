@@ -7,13 +7,12 @@
 
 #define RST_PIN 33
 #define SS_PIN 5
-#define statusLed 13
 
 // Struct del modulo  de Acceso
 accsDevice accsData;
 Servo servo0;                              // Objeto tipo Servo
 int servo0Proporties[3] = {32, 500, 2400}; // PIN, Min, Max
-
+statusLED led; 
 MFRC522::StatusCode status; // variable to get card status
 
 MFRC522 mfrc522(SS_PIN, RST_PIN); // Create MFRC522 instance.
@@ -38,23 +37,26 @@ char prevStatus=accsData.status;
 
 void setup()
 {
+  initializeLED();
+  controlStatusLED(WAITING);
   Serial.begin(115200); // Initialize serial communications with the PC
   while (!Serial)
     ;                 // Do nothing if no serial port is opened (added for Arduinos based on ATMEGA32U4)
   SPI.begin();        // Init SPI bus
   mfrc522.PCD_Init(); // Init MFRC522 card
-  pinMode(statusLed, OUTPUT);
 
   // Inicializar SPIFFS
   if (!SPIFFS.begin(true))
   {
     Serial.println("Error al montar SPIFFS");
+    controlStatusLED(ERROR);
     return;
   }
   servo0.setPeriodHertz(50); // Frecuencia estándar de servo
   servo0.attach(servo0Proporties[0], servo0Proporties[1], servo0Proporties[2]);
   InitEspNow();
   readKeys(); // Leera todas las llaves de acceso
+  controlStatusLED(CLEAR);
 }
 
 void loop()
@@ -77,9 +79,7 @@ void controlAccess()
     while (!writeKey(accsData.key))
     {
       Serial.printf("\nEsperando terjeta NFC para Grabar la Llave: %s", accsData.key);
-      digitalWrite(statusLed, HIGH);
-      delay(500);
-      digitalWrite(statusLed, LOW);
+      controlStatusLED(WAITING);
       return;
     }
     saveKey(accsData.key);
@@ -118,10 +118,12 @@ void controlAccess()
       strncpy(accsData.key, "Accion del Host", sizeof(accsData.key));
       newAction = true;
     }
+    controlStatusLED(OFF);
     break;
   case on:
     if (prevStatus != on)
     {
+      controlStatusLED(CLEAR);
       accsData.status = on;
       strncpy(accsData.key, "Accion del Host", sizeof(accsData.key));
       accsData.mode = AccsNFC;
@@ -228,24 +230,17 @@ bool validateAccess(char *proposedKey)
   Serial.println("\nDENEGADO");
   accsData.status = deny;
   getActualDate(accsData.date, sizeof(accsData.date));
-
-  digitalWrite(statusLed, HIGH);
-  delay(300);
-  digitalWrite(statusLed, LOW);
-  delay(300);
-  digitalWrite(statusLed, HIGH);
-  delay(300);
-  digitalWrite(statusLed, LOW);
+  controlStatusLED(DENIED);
   return false;
 }
 
 void unlockAccess(Servo &servo, int servoProperties[3])
 {
-  digitalWrite(statusLed, HIGH);
+  controlStatusLED(ACEPTED);
   servoMove(2000, 180, 0, servo, servoProperties);
   delay(2000);
   servoMove(2000, -180, 180, servo, servoProperties);
-  digitalWrite(statusLed, LOW);
+  controlStatusLED(CLEAR);
 }
 
 bool accessWithNFC()

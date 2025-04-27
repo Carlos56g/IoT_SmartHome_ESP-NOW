@@ -208,11 +208,12 @@ void updateAccssData(JsonDocument doc)
 
 void updateTempData(JsonDocument doc)
 {
-  receivedData.temperatureModule.status = ((const char *)doc["status"])[0];
-
-  receivedData.temperatureModule.mode = ((const char *)doc["mode"])[0];
-
-  receivedData.temperatureModule.desiredTemperature = doc["desiredTemperature"];
+  receivedData.temperatureModule.status = ((const char *)doc["status"])[0]; // Siempre cambiamos el Status
+  if (doc["mode"] != "")
+  { // Si tiene Modo, es que estamos en Details de Temperatura
+    receivedData.temperatureModule.mode = ((const char *)doc["mode"])[0];
+    receivedData.temperatureModule.desiredTemperature = doc["desiredTemperature"];
+  }
 }
 
 void updateTempProgData(JsonDocument doc)
@@ -231,6 +232,13 @@ JsonDocument updateDoc(char module)
   JsonDocument doc;
   switch (module)
   {
+  case accsModule:
+    doc["key"] = receivedData.accessModule.key;
+    doc["status"] = (signed char)receivedData.accessModule.status;
+    doc["date"] = receivedData.accessModule.date;
+    doc["mode"] = (signed char)receivedData.accessModule.mode;
+    break;
+
   case tempModule:
     doc["actualTemperature"] = receivedData.temperatureModule.actualTemperature;
     doc["actualHumidity"] = receivedData.temperatureModule.actualHumidity;
@@ -246,7 +254,7 @@ JsonDocument updateDoc(char module)
     JsonArray arr = doc.to<JsonArray>();
     for (int i = 0; i < numLightDevices; i++)
     {
-      JsonObject individualLight=arr.createNestedObject();
+      JsonObject individualLight = arr.createNestedObject();
       individualLight["mode"] = (signed char)receivedData.lightModule.lightDev[i].mode;
       individualLight["pMode"] = (signed char)receivedData.lightModule.lightDev[i].pMode;
       individualLight["onDate"] = receivedData.lightModule.lightDev[i].onDate;
@@ -263,11 +271,12 @@ JsonDocument updateDoc(char module)
 void updateLightsData(JsonDocument doc)
 {
   JsonArray arr = doc["lightData"].as<JsonArray>();
-  for (int i = 0; i < numLightDevices && i < arr.size(); i++) {
+  for (int i = 0; i < numLightDevices && i < arr.size(); i++)
+  {
     JsonObject obj = arr[i];
 
-    receivedData.lightModule.lightDev[i].mode = ((const char*)obj["mode"])[0];
-    receivedData.lightModule.lightDev[i].pMode = ((const char*)obj["pMode"])[0];
+    receivedData.lightModule.lightDev[i].mode = ((const char *)obj["mode"])[0];
+    receivedData.lightModule.lightDev[i].pMode = ((const char *)obj["pMode"])[0];
 
     strncpy(receivedData.lightModule.lightDev[i].onDate, obj["onDate"] | "", 20);
     strncpy(receivedData.lightModule.lightDev[i].offDate, obj["offDate"] | "", 20);
@@ -405,6 +414,93 @@ void printLightDevices(const lightDevices &devices)
 
     Serial.println("-----------------------------------");
   }
+}
+
+void initializeLED(){
+  ledcSetup(led.bluePwm, 5000, 8);
+  ledcAttachPin(led.bluePin, led.bluePwm);
+  ledcSetup(led.greenPwm, 5000, 8);
+  ledcAttachPin(led.greenPin, led.greenPwm);
+  ledcSetup(led.red,5000, 8);
+  ledcAttachPin(led.redPin, led.redPwm);
+
+  ledcWrite(led.bluePwm, 255);
+  delay(500);
+  ledcWrite(led.bluePwm, 0);
+  ledcWrite(led.greenPwm, 255);
+  delay(500);
+  ledcWrite(led.greenPwm, 0);
+  ledcWrite(led.redPwm, 255);
+  delay(500);
+  ledcWrite(led.redPwm, 0);
+}
+
+
+void controlStatusLED(char state){
+  switch (state)
+{
+  case CLEAR: // '1'
+    ledcWrite(led.greenPwm, 255);  // Verde fuerte
+    ledcWrite(led.redPwm, 0);
+    ledcWrite(led.bluePwm, 0);
+    break;
+
+  case ERROR: // '2'
+    ledcWrite(led.redPwm, 255);    // Rojo fuerte
+    ledcWrite(led.greenPwm, 0);
+    ledcWrite(led.bluePwm, 0);
+    break;
+
+  case WAITING: // '3'
+    ledcWrite(led.bluePwm, 255);   // Azul fuerte
+    ledcWrite(led.redPwm, 0);
+    ledcWrite(led.greenPwm, 0);
+    break;
+
+  case SENDLIGHT: // '4'
+    ledcWrite(led.redPwm, 255);    // Naranja (Rojo fuerte + Verde medio)
+    ledcWrite(led.greenPwm, 128);
+    ledcWrite(led.bluePwm, 0);
+    break;
+
+  case SENDACCS: // '5'
+    ledcWrite(led.bluePwm, 255);   // Violeta (Azul + Rojo medio)
+    ledcWrite(led.redPwm, 128);
+    ledcWrite(led.greenPwm, 0);
+    break;
+
+  case SENDTEMP: // '6'
+    ledcWrite(led.greenPwm, 255);  // Amarillo (Rojo medio + Verde fuerte)
+    ledcWrite(led.redPwm, 128);
+    ledcWrite(led.bluePwm, 0);
+    break;
+
+  case RECEIVEDLIGHT: // '7'
+    ledcWrite(led.greenPwm, 255);  // Cian (Verde + Azul fuerte)
+    ledcWrite(led.bluePwm, 255);
+    ledcWrite(led.redPwm, 0);
+    break;
+
+  case RECEIVEDACCS: // '8'
+    ledcWrite(led.bluePwm, 128);   // Azul bajito
+    ledcWrite(led.greenPwm, 255);  // Verde fuerte
+    ledcWrite(led.redPwm, 0);
+    break;
+
+  case RECEIVEDTEMP: // '9'
+    ledcWrite(led.redPwm, 255);    // Rosa (Rojo fuerte + Azul medio)
+    ledcWrite(led.bluePwm, 128);
+    ledcWrite(led.greenPwm, 0);
+    break;
+
+  default:
+    // Apagar el LED si el estado no se reconoce
+    ledcWrite(led.redPwm, 0);
+    ledcWrite(led.greenPwm, 0);
+    ledcWrite(led.bluePwm, 0);
+    break;
+}
+
 }
 
 #endif

@@ -12,8 +12,10 @@
 // Se ejecutará cada que se ENVIEN datos con ESP-NOW
 void onDataSent(const uint8_t *mac_addr, esp_now_send_status_t status)
 {
-	Serial.print("\r\nLast Packet Send Status:\t");
-	Serial.println(status == ESP_NOW_SEND_SUCCESS ? "Delivery Success" : "Delivery Fail");
+	if (status == ESP_NOW_SEND_SUCCESS)
+		controlStatusLED(CLEAR);
+	else
+		controlStatusLED(ERROR);
 }
 
 // Envia un Mensaje por medio de ESP-NOW al Host con la accion Especificada
@@ -57,6 +59,7 @@ int searchSender(const uint8_t *mac)
 
 void onDataReceived(const uint8_t *mac, const uint8_t *data, int len)
 {
+	controlStatusLED(DATARECEIVED);
 	Serial.printf("Packet received from: %02X:%02X:%02X:%02X:%02X:%02X\n", mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]);
 	Serial.printf("Bytes received: %d\n", len);
 
@@ -65,23 +68,26 @@ void onDataReceived(const uint8_t *mac, const uint8_t *data, int len)
 
 	if (senderID == 0)
 	{
-		if (len == sizeof(char)) //Simpre que sea de tipo accion, despues de modificar los datos, se le mandara al Host de Vuelta
+		if (len == sizeof(char)) // Simpre que sea de tipo accion, despues de modificar los datos, se le mandara al Host de Vuelta
 		{
 			char action = data[0];
 			switch (action)
 			{
-			case deleteData: // Eliminar toda la informacion del Struct y los archivos internos
-				memset(&lightData, 0, sizeof(lightDevices)); //Borra todo el struct
-				//lightData.mode=deleteData;
+			case deleteData:								 // Eliminar toda la informacion del Struct y los archivos internos
+				memset(&lightData, 0, sizeof(lightDevices)); // Borra todo el struct
+				// lightData.mode=deleteData;
 				break;
 
-			case requestData: // Request Data
-				sendData(sendActualData, lightData); //Mandamos los Datos de Vuelta
+			case requestData:						 // Request Data
+				sendData(sendActualData, lightData); // Mandamos los Datos de Vuelta
 				break;
+
+			case restart:
+				ESP.restart();
 
 			default:
-				return; //Accion Invalida para el Modulo de Acceso!
-			break;
+				return; // Accion Invalida para el Modulo de Acceso!
+				break;
 			}
 		}
 		// SOLO PUEDE RECIBIR DEL HOST
@@ -139,7 +145,7 @@ void getActualDate(char *date, size_t size)
 	while (!getLocalTime(&timeInfo))
 	{
 		Serial.println("Error al obtener la hora");
-		sendData(requestTime, lightData); //Mandamos una peticion al Host para que nos de la fecha Actual
+		sendData(requestTime, lightData); // Mandamos una peticion al Host para que nos de la fecha Actual
 		delay(1000);
 		if (tries > 10)
 		{

@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="UTF-8">
+  <title>Smart Home</title>
+  <link rel="stylesheet" href="../style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cal+Sans&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Lexend:wght@100..900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+</head>
+
+<body>
+
+  <a href="/" class="home">
+    <button>
+      <i class="fa fa-home"></i>
+    </button>
+  </a>
+
+  <div id="Temp">
+    <h1>Temperatura</h1>
+    <div class="checkbox-wrapper-5">
+      <div class="check">
+        <input type="checkbox" id="OnOffTemp" checked onchange="OnOffTemp()">
+        <label for="toggleStateTemp"></label> 
+      </div>
+    </div>
+
+    <div id="InfoPanel">
+      <h2>Temperatura Actual: </h2> <div id="actualTemp"></div> 
+      <h2>Humedad Actual: </h2> <div id="actualHum"></div> 
+      <h2>Modo actual: </h2>
+      <select name="select" id="tempModeSelect" onchange="updateTempData()" class="custom-select"> <!--Se Supone que se debe de desactivar si se desactiva la checkbox-->
+        <option value="O">Automatico</option>
+        <option value="P" selected>Caliente</option>
+        <option value="Q">Frio</option>
+        <option value="R">Solo Aire</option>
+      </select>
+    </div>
+    
+
+    <h2>Temperatura Deseada: </h2>
+    <input type="number" id="desiredTemperatureInput" onchange="updateTempData()" class="custom-input"> <!--Se Supone que se debe de desactivar si el modo es diferente a automatico-->
+
+    <br><br>
+    <a href="/Temp/Schedule">
+      <button id="ScheduleTemp">Programar Encendido</button>
+    </a>
+
+  </div>
+
+  <script src="script.js"></script>
+</body>
+
+</html>

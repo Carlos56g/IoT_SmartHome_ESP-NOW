@@ -9,7 +9,8 @@ enum ESPNowActions {
   deleteData = 'A',
   requestData = 'B',
   requestTime = 'C',
-  sendActualData = 'M'
+  sendActualData = 'M',
+  restart = 'Z'
 }; 
 
 enum ModulesID {
@@ -47,6 +48,18 @@ enum lightModes{
   presence = 'T',
   presenceAndAuto = 'V',
 };
+
+enum ledStatus {
+  CLEAR = '1',
+  ERROR = '2',
+  WAITING = '3',
+  SENDLIGHT = '4',
+  SENDACCS = '5',
+  SENDTEMP = '6',
+  RECEIVEDLIGHT = '7',
+  RECEIVEDACCS = '8',
+  RECEIVEDTEMP = '9',
+}; 
 
 
 //Struct de los dispositivos de LUZ
@@ -112,8 +125,20 @@ struct espNowData {
   accsDevice accessModule;              //Datos del modulo de acceso
 };
 
+struct statusLED{
+  short redPin = 13;
+  short bluePin = 14;
+  short greenPin = 12;
+  short redPwm = 1;
+  short bluePwm = 2;
+  short greenPwm = 3;
+  short red = 0;
+  short blue = 0;
+  short green = 0;
+};
 
+extern statusLED led;
 extern espNowData receivedData;
 extern std::list<accsEvent> accsHistory; //Lista global dinamica
-
+extern bool newAccsAction = true;
 #endif

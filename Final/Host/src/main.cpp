@@ -9,11 +9,13 @@
 
 espNowData receivedData;
 std::list<accsEvent> accsHistory;
+statusLED led; 
 
 AsyncWebServer Server(80); // Numero de Puerto a Usar
 
 void setup()
 {
+  initializeLED();
   Serial.begin(115200);
   initEspNow();
   // Montar el sistema de archivos
@@ -24,20 +26,30 @@ void setup()
   }
   //printSPIIFFiles();
 
-  // Servir el archivo index.html
+  //Cliente
   Server.on("/", HTTP_GET, [](AsyncWebServerRequest *request)
             { request->send(SPIFFS, "/index.html", "text/html"); });
 
-  // Servir el archivo AccsHistory.html
   Server.on("/Accs/History", HTTP_GET, [](AsyncWebServerRequest *request)
-            { request->send(SPIFFS, "/accsHistory.html", "text/html"); });
+            { request->send(SPIFFS, "/Accs/History.html", "text/html"); });
 
   Server.on("/Accs/Keys", HTTP_GET, [](AsyncWebServerRequest *request)
-            { request->send(SPIFFS, "/accsKeys.html", "text/html"); });
+            { request->send(SPIFFS, "/Accs/Keys.html", "text/html"); });
 
-  Server.on("/Temp/Prog", HTTP_GET, [](AsyncWebServerRequest *request)
-            { request->send(SPIFFS, "/tempProg.html", "text/html"); });
+  Server.on("/Accs/Details", HTTP_GET, [](AsyncWebServerRequest *request)
+            { request->send(SPIFFS, "/Accs/Details.html", "text/html"); });
 
+  Server.on("/Temp/Schedule", HTTP_GET, [](AsyncWebServerRequest *request)
+            { request->send(SPIFFS, "/Temp/Schedule.html", "text/html"); });
+  
+  Server.on("/Temp/Details", HTTP_GET, [](AsyncWebServerRequest *request)
+            { request->send(SPIFFS, "/Temp/Details.html", "text/html"); });
+
+  Server.on("/Light/Details", HTTP_GET, [](AsyncWebServerRequest *request)
+            { request->send(SPIFFS, "/Light/Details.html", "text/html"); });
+
+
+  //API
   Server.on("/api/Accs/Keys/get", HTTP_GET, [](AsyncWebServerRequest *request)
             {
               requestModule(accsModule, requestData);
@@ -144,7 +156,7 @@ void setup()
       Serial.println("Apagar Modulo");
       receivedData.lightModule.on=false;
     }
-    
+
     sendData(lightModule, receivedData);
     request->send(200, "application/json", "{\"status\":\"ok\"}"); });
 
@@ -172,28 +184,28 @@ void setup()
     sendData(lightModule, receivedData);
     request->send(200, "application/json", "{\"status\":\"ok\"}"); });
 
-    Server.on("/api/TempProg/Update", HTTP_POST, [](AsyncWebServerRequest *request) {}, NULL, [](AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total)
+  Server.on("/api/TempProg/Update", HTTP_POST, [](AsyncWebServerRequest *request) {}, NULL, [](AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total)
     {
-String body = String((char*)data).substring(0, len);
+    String body = String((char*)data).substring(0, len);
 
-Serial.println("📩 Body recibido:");
-Serial.println(body);
+    Serial.println("📩 Body recibido:");
+    Serial.println(body);
 
-JsonDocument doc; // Usar JsonDocument
+    JsonDocument doc; // Usar JsonDocument
 
-// Deserializar el JSON recibido
-DeserializationError error = deserializeJson(doc, body);
+    // Deserializar el JSON recibido
+    DeserializationError error = deserializeJson(doc, body);
+              
+    if (error) {
+    Serial.println("Error al deserializar el JSON");
+    request->send(400, "application/json", "{\"error\":\"Bad JSON\"}");
+    return;
+    }
           
-if (error) {
-Serial.println("Error al deserializar el JSON");
-request->send(400, "application/json", "{\"error\":\"Bad JSON\"}");
-return;
-}
-      
-// Asignar los valores del JSON al struct, haciendo la conversión de char a unsigned char
-updateTempProgData(doc);
-sendData(tempModule, receivedData);
-request->send(200, "application/json", "{\"status\":\"ok\"}"); });
+    // Asignar los valores del JSON al struct, haciendo la conversión de char a unsigned char
+    updateTempProgData(doc);
+    sendData(tempModule, receivedData);
+    request->send(200, "application/json", "{\"status\":\"ok\"}"); });
 
   Server.on("/api/Temp/get", HTTP_GET, [](AsyncWebServerRequest *request)
             {
@@ -211,18 +223,55 @@ request->send(200, "application/json", "{\"status\":\"ok\"}"); });
               JsonDocument doc;
               doc = updateDoc(lightModule);
               String output;
-              serializeJson(doc, output);           // Serializa el JSON
-              Serial.println(output);                     
+              serializeJson(doc, output);           // Serializa el JSON                   
+              request->send(200, "application/json", output); // Envia la respuesta
+            });
+  Server.on("/api/Accs/get", HTTP_GET, [](AsyncWebServerRequest *request)
+            {
+              //requestModule(accsModule, requestData); // Pedimos los Datos
+              JsonDocument doc;
+              doc = updateDoc(accsModule);
+              String output;
+              serializeJson(doc, output);           // Serializa el JSON            
               request->send(200, "application/json", output); // Envia la respuesta
             });
 
+  Server.on("/api/Accs/trigger", HTTP_GET, [](AsyncWebServerRequest *request)
+            {
+              //requestModule(accsModule, requestData); // Pedimos los Datos
+              if(newAccsAction){
+                request->send(200, "application/json"); // Envia la respuesta
+                newAccsAction=false;
+              }
+              else
+                request->send(201, "application/json");
+            });
+
+  
+
   // Archivos estáticos
+
+  //Index
   Server.serveStatic("/style.css", SPIFFS, "/style.css");
-  Server.serveStatic("/script.js", SPIFFS, "/script.js");
+  Server.serveStatic("/scriptHome.js", SPIFFS, "/scriptHome.js");
 
-  // Ruta para obtener la informacion del modulo de Luz
+  //Temp
+  Server.serveStatic("/Temp/script.js", SPIFFS, "/Temp/script.js");
+
+  //Accs
+  Server.serveStatic("/Accs/script.js", SPIFFS, "/Accs/script.js");
+
+  //Light
+  Server.serveStatic("/Light/script.js", SPIFFS, "/Light/script.js");
 
 
+  Server.on("/reload", HTTP_GET, [](AsyncWebServerRequest *request)
+  {
+    requestModule(lightModule,restart);
+    requestModule(accsModule,restart);
+    requestModule(tempModule,restart);
+    ESP.restart();
+  });
 
   Server.begin();
 }

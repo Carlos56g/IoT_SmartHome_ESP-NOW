@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Llaves Registradas</title>
+  <link rel="stylesheet" href="../style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cal+Sans&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Lexend:wght@100..900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+</head>
+
+<body onload="getAccsKeys()">
+
+  <a href="/Accs/Details" class="home">
+    <button>
+      <i class="fa fa-arrow-left"></i> <!-- Ícono de flecha hacia atrás -->
+    </button>
+  </a>
+
+  <h1 style="text-align:center;">Llaves Registradas</h1>
+
+  <table>
+    <thead>
+      <tr>
+        <th>#</th>
+        <th>Key</th>
+      </tr>
+    </thead>
+    <tbody id="keysBody">
+    </tbody>
+  </table>
+
+  <br>
+
+  <button id="accsDeleteKeysButton" onclick="deleteAccsKeys()">Eliminar todas las llaves</button>
+
+  <script src="script.js"></script>
+</body>
+</html>

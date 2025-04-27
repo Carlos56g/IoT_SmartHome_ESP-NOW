@@ -6,7 +6,8 @@ enum ESPNowActions {
   deleteData = 'A',
   requestData = 'B',
   requestTime = 'C',
-  sendActualData = 'M'
+  sendActualData = 'M',
+  restart = 'Z'
 }; 
 
 enum accsModes {
@@ -26,6 +27,17 @@ enum accsStatus {
   //Existen status iguales a los modos (on,off,accsOpen,accsClose y DeleteKeys)
 }; 
 
+enum ledStatus {
+  CLEAR = '1',
+  ERROR = '2',
+  WAITING = '3',
+  DENIED = '4',
+  ACEPTED = '5',
+  DATARECEIVED = '6',
+  DATASENDED = '7',
+  OFF = '8'
+}; 
+
 //Struct del modulo  de Acceso
 struct accsDevice
 {
@@ -36,6 +48,19 @@ struct accsDevice
   char date[20];                       //Almacena la fecha de Acceso
 };
 
+struct statusLED{
+  short redPin = 13;
+  short bluePin = 14;
+  short greenPin = 12;
+  short redPwm = 1;
+  short bluePwm = 2;
+  short greenPwm = 3;
+  short red = 0;
+  short blue = 0;
+  short green = 0;
+};
+
+extern statusLED led;
 
 extern accsDevice accsData;
 extern char prevStatus;

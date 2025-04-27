@@ -15,7 +15,8 @@ enum ESPNowActions {
   deleteData = 'A',
   requestData = 'B',
   requestTime = 'C',
-  sendActualData = 'M'
+  sendActualData = 'M',
+  restart = 'Z'
 }; 
 
 enum ModulesID {
@@ -54,6 +55,18 @@ enum lightModes{
   presenceAndAuto = 'V',
 };
 
+enum ledStatus {
+  CLEAR = '1',
+  ERROR = '2',
+  WAITING = '3',
+  DENIED = '4',
+  ACEPTED = '5',
+  DATARECEIVED = '6',
+  DATASENDED = '7',
+  OFF = '8'
+}; 
+
+
 //Struct de los dispositivos de LUZ
 struct lightDevice
 {
@@ -73,6 +86,20 @@ struct lightDevices{
   lightDevice lightDev[numLightDevices];
   bool on = true;
 };
+
+struct statusLED{
+  short redPin = 13;
+  short bluePin = 14;
+  short greenPin = 12;
+  short redPwm = 1;
+  short bluePwm = 2;
+  short greenPwm = 3;
+  short red = 0;
+  short blue = 0;
+  short green = 0;
+};
+
+extern statusLED led;
 
 extern lightDevices lightData;
 

@@ -61,6 +61,7 @@ function toggleOnOffLight() {
     return checkbox.checked;
 }
 
+
 function OnOffAccs() {
     if (toggleOnOffAccs()) {
         accsOn();

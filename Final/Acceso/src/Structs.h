@@ -41,11 +41,11 @@ enum ledStatus {
 //Struct del modulo  de Acceso
 struct accsDevice
 {
-  char key[16];                        //Almacena la llave de acceso
+  char key[16]="EMPTY";                        //Almacena la llave de acceso
   char mode=AccsNFC;                   //Contiene el Modo
   char keys[MAX_KEYS_NUM][16];         //Contiene todas las llaves de Acceso Almacenadas, 100 Keys de 16 Caracteres
   char status=on;                      //Contiene el Status 
-  char date[20];                       //Almacena la fecha de Acceso
+  char date[20]="0000-00-00T00:00:00";                       //Almacena la fecha de Acceso
 };
 
 struct statusLED{

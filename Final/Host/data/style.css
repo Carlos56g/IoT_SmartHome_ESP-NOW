@@ -173,6 +173,10 @@ button:disabled {
     /* evita que haga clic incluso si el estilo lo permite */
   }
 
+  .disabled-style a{
+    cursor: not-allowed;
+  }
+
   .enabled-style {
     opacity: 1;
     cursor: auto;

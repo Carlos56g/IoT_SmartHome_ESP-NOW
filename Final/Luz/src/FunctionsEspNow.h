@@ -162,7 +162,6 @@ void static InitEspNow()
 {
 	// WiFi.mode(WIFI_AP_STA); //Modo AP y Station HOST
 	WiFi.mode(WIFI_AP); // Modo AP MODULO
-	esp_wifi_set_channel(10, WIFI_SECOND_CHAN_NONE);
 	if (esp_now_init() != ESP_OK)
 	{
 		Serial.println("Error initializing ESP-NOW");

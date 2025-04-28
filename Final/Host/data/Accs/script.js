@@ -59,7 +59,7 @@ function OnOffAccs() {
 function accsOff() {
     accsData.mode = modes.off;
     // Enviar la petición GET con un header personalizado
-    fetch("http://192.168.31.191/api/Accs/Mode", {
+    fetch("http://SmartHomeESP32.local/api/Accs/Mode", {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
@@ -74,7 +74,7 @@ function accsOff() {
 function accsOn() {
     accsData.mode = modes.on;
     // Enviar la petición GET con un header personalizado
-    fetch("http://192.168.31.191/api/Accs/Mode", {
+    fetch("http://SmartHomeESP32.local/api/Accs/Mode", {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
@@ -90,7 +90,7 @@ function accsOn() {
 function accsCreateKey() {
     accsData.mode = modes.createKey;
     accsData.key = document.getElementById("accsKeyInput").value;
-    fetch("http://192.168.31.191/api/Accs/Mode", {
+    fetch("http://SmartHomeESP32.local/api/Accs/Mode", {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
@@ -104,7 +104,7 @@ function accsCreateKey() {
 
 function accsOpen() {
     accsData.mode = modes.accsOpen;
-    fetch("http://192.168.31.191/api/Accs/Mode", {
+    fetch("http://SmartHomeESP32.local/api/Accs/Mode", {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
@@ -119,7 +119,7 @@ function accsOpen() {
 
 function accsClose() {
     accsData.mode = modes.accsClose;
-    fetch("http://192.168.31.191/api/Accs/Mode", {
+    fetch("http://SmartHomeESP32.local/api/Accs/Mode", {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',

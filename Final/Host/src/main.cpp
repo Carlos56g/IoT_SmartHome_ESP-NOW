@@ -24,7 +24,6 @@ void setup()
     Serial.println("Error montando SPIFFS");
     return;
   }
-  //printSPIIFFiles();
 
   //Cliente
   Server.on("/", HTTP_GET, [](AsyncWebServerRequest *request)
@@ -98,7 +97,7 @@ void setup()
 
   Server.on("/api/Accs/Mode", HTTP_POST, [](AsyncWebServerRequest *request) {}, NULL, [](AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total)
             {
-    String body = String((char*)data).substring(0, len);
+    String body = String((char*)data).substring(0, len);  
 
     Serial.println("📩 Body recibido:");
     Serial.println(body);

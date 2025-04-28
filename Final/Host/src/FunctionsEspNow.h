@@ -8,6 +8,7 @@
 #include "MAC_addresses.h" //Archivo de cabecera  con las direcciones MAC de los ESP32
 #include "Structs.h"
 #include "UtilitiesFunctions.h"
+#include <ESPmDNS.h>
 
 void sendDate(int peekID);
 
@@ -16,6 +17,8 @@ void onDataSent(const uint8_t *mac_addr, esp_now_send_status_t status)
 {
 	if (status == ESP_NOW_SEND_SUCCESS)
 		controlStatusLED(CLEAR);
+	else
+		controlStatusLED(ERROR);
 }
 
 // Envia un Mensaje por medio de ESP-NOW con el ID especificado
@@ -173,7 +176,6 @@ void static initEspNow()
 	controlStatusLED(WAITING);
 	WiFi.mode(WIFI_AP_STA); // Modo AP y Station HOST
 	// WiFi.mode(WIFI_AP); //Modo AP MODULO
-	// esp_wifi_set_channel(10, WIFI_SECOND_CHAN_NONE);
 	Serial.printf("\n\nConectando a la RED: %s\n", ssid);
 	WiFi.begin(ssid, password);
 	while (WiFi.status() != WL_CONNECTED)
@@ -185,6 +187,13 @@ void static initEspNow()
 	Serial.println("\n\nWiFi Conectado Corecctamente!\nDireccion IP: ");
 	Serial.print(WiFi.localIP());
 	Serial.printf("\nCanal Wifi: %d\n\n", WiFi.channel());
+
+	if (!MDNS.begin("smarthomeesp32")) {
+        Serial.println("Error iniciando mDNS");
+    } else {
+        Serial.println("mDNS iniciado: http://smarthomeesp32.local/");
+    }
+
 	if (esp_now_init() != ESP_OK)
 	{
 		Serial.println("Error initializing ESP-NOW");

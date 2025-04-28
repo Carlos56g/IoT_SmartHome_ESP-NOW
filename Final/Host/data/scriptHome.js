@@ -98,7 +98,7 @@ function OnOffLight() {
 
 function lightOff() {
     // Enviar la petición GET con un header personalizado
-    fetch("http://192.168.31.191/api/Light/Mode", {
+    fetch("http://SmartHomeESP32.local/api/Light/Mode", {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
@@ -112,7 +112,7 @@ function lightOff() {
 
 function lightOn() {
     // Enviar la petición GET con un header personalizado
-    fetch("http://192.168.31.191/api/Light/Mode", {
+    fetch("http://SmartHomeESP32.local/api/Light/Mode", {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
@@ -128,7 +128,7 @@ function lightOn() {
 function accsOff() {
     accsData.mode = modes.off;
     // Enviar la petición GET con un header personalizado
-    fetch("http://192.168.31.191/api/Accs/Mode", {
+    fetch("http://SmartHomeESP32.local/api/Accs/Mode", {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
@@ -143,7 +143,7 @@ function accsOff() {
 function accsOn() {
     accsData.mode = modes.on;
     // Enviar la petición GET con un header personalizado
-    fetch("http://192.168.31.191/api/Accs/Mode", {
+    fetch("http://SmartHomeESP32.local/api/Accs/Mode", {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
@@ -159,7 +159,7 @@ function accsOn() {
 function tempOff() {
     tempData.status = modes.off;
 
-    fetch("http://192.168.31.191/api/Temp/Mode", {
+    fetch("http://SmartHomeESP32.local/api/Temp/Mode", {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
@@ -173,7 +173,7 @@ function tempOff() {
 
 function tempOn() {
     tempData.status = modes.on;
-    fetch("http://192.168.31.191/api/Temp/Mode", {
+    fetch("http://SmartHomeESP32.local/api/Temp/Mode", {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',

@@ -5,6 +5,8 @@
 #include "FunctionsEspNow.h"
 #include <Arduino.h>
 
+void controlStatusLED(char state);
+
 void printAccsDevice(const accsDevice &device)
 {
   Serial.println("----- accsDevice Info -----");
@@ -190,6 +192,7 @@ void getActualDate(char *date, size_t size)
     if (tries > 10)
     {
       Serial.println("No fue posible obtener la fecha por parte de internet");
+      controlStatusLED(ERROR);
       return;
     }
     tries++;
@@ -293,7 +296,6 @@ void readAccsHistory()
   File file = SPIFFS.open("/AccsHistory.txt", "r");
   if (!file)
   {
-    Serial.println("No se encontró el archivo AccsHistory.txt");
     return;
   }
   String allAccsStringData = file.readString();
@@ -302,15 +304,11 @@ void readAccsHistory()
   String individualAccsStringData;
   int startRow = 0;
   int endRow = 0;
-  Serial.println("All String");
-  Serial.println(allAccsStringData);
   accsHistory.clear();
 
   while (true)
   {
     endRow = allAccsStringData.indexOf('\n', startRow);
-    Serial.println("endRow:");
-    Serial.println(endRow);
     if (endRow == -1)
     {
       break;
@@ -330,9 +328,6 @@ void readAccsHistory()
     accsHistory.push_back(accsEvent);
     startRow = endRow + 1;
   }
-  Serial.println("Elementos de la Lista:");
-  Serial.println(accsHistory.size());
-  printAccsHistory(accsHistory);
 }
 
 void saveAccsHistory(accsEvent accsEvent)
@@ -341,7 +336,6 @@ void saveAccsHistory(accsEvent accsEvent)
   File file = SPIFFS.open("/AccsHistory.txt", "a"); // crea un archivo si no esta, y lo abre en modo append
   if (!file)
   {
-    Serial.println("Error al abrir el archivo de AccsHistory");
     return;
   }
   if (accsEvent.status == NULL) // Hay veces que el status se manda Nulo y trueba el archivo de historial
@@ -360,7 +354,7 @@ void deleteAccsHistory()
 {
   if (SPIFFS.remove("/AccsHistory.txt"))
   {
-    Serial.println("Archivo borrado!");
+    return;
   }
 }
 

@@ -228,7 +228,6 @@ void setup()
             });
   Server.on("/api/Accs/get", HTTP_GET, [](AsyncWebServerRequest *request)
             {
-              //requestModule(accsModule, requestData); // Pedimos los Datos
               JsonDocument doc;
               doc = updateDoc(accsModule);
               String output;
@@ -238,7 +237,6 @@ void setup()
 
   Server.on("/api/Accs/trigger", HTTP_GET, [](AsyncWebServerRequest *request)
             {
-              //requestModule(accsModule, requestData); // Pedimos los Datos
               if(newAccsAction){
                 request->send(200, "application/json"); // Envia la respuesta
                 newAccsAction=false;

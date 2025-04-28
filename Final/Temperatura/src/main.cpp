@@ -7,8 +7,9 @@
 
 #define SDA_PIN 21
 #define SCL_PIN 22
-#define fanC 17
-#define fanH 16
+#define fanC 17 //Ventilador Frio (x3 12v) 
+#define fanH 16 //Ventilador Caliente Frontal (5v)
+#define fanA 4 //Ventilador Caliente Trasero (5v)
 #define peltier 32
 float temperatureMargin = 3; // Intervalo de Temperatura, no modificable por el usuario
 char prevStatus;
@@ -121,11 +122,13 @@ void initAHT20()
 
 void initPins()
 {
-  pinMode(fanC, OUTPUT);    // Pin del motor 1 (Frio)
-  pinMode(fanH, OUTPUT);    // Pin del motor 2 (Caliente)
-  pinMode(peltier, OUTPUT); // Pin del relevador de la Peltier
+  pinMode(fanC, OUTPUT);
+  pinMode(fanH, OUTPUT);
+  pinMode(fanA, OUTPUT);
+  pinMode(peltier, OUTPUT);
   digitalWrite(fanC, LOW);
   digitalWrite(fanH, LOW);
+  digitalWrite(fanA, LOW);
   digitalWrite(peltier, HIGH);
 }
 
@@ -136,6 +139,7 @@ void controlTempDevice(char mode)
   case nothing:
     digitalWrite(fanC, LOW);
     digitalWrite(fanH, LOW);
+    digitalWrite(fanA, LOW);
     digitalWrite(peltier, HIGH);
     controlStatusLED(PELTIEROFF);
     break;
@@ -143,6 +147,7 @@ void controlTempDevice(char mode)
   case cold:
     digitalWrite(fanC, HIGH);
     digitalWrite(fanH, LOW);
+    digitalWrite(fanA, HIGH);
     digitalWrite(peltier, LOW);
     controlStatusLED(PELTIERON);
     break;
@@ -150,6 +155,7 @@ void controlTempDevice(char mode)
   case hot:
     digitalWrite(fanC, LOW);
     digitalWrite(fanH, HIGH);
+    digitalWrite(fanA, HIGH);
     digitalWrite(peltier, LOW);
     controlStatusLED(PELTIERON);
     break;
@@ -157,6 +163,7 @@ void controlTempDevice(char mode)
   case air:
     digitalWrite(fanH, HIGH);
     digitalWrite(fanC, HIGH);
+    digitalWrite(fanA, HIGH);
     digitalWrite(peltier, HIGH);
     controlStatusLED(PELTIEROFF);
     break;
@@ -164,6 +171,7 @@ void controlTempDevice(char mode)
   case off:
     digitalWrite(fanC, LOW);
     digitalWrite(fanH, LOW);
+    digitalWrite(fanA, LOW);
     digitalWrite(peltier, HIGH);
     tempData.status=off;
     break;

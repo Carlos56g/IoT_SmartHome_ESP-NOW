@@ -98,7 +98,7 @@ function OnOffLight() {
 
 function lightOff() {
     // Enviar la petición GET con un header personalizado
-    fetch("http://SmartHomeESP32.local/api/Light/Mode", {
+    fetch("/api/Light/Mode", {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
@@ -112,7 +112,7 @@ function lightOff() {
 
 function lightOn() {
     // Enviar la petición GET con un header personalizado
-    fetch("http://SmartHomeESP32.local/api/Light/Mode", {
+    fetch("/api/Light/Mode", {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
@@ -128,7 +128,7 @@ function lightOn() {
 function accsOff() {
     accsData.mode = modes.off;
     // Enviar la petición GET con un header personalizado
-    fetch("http://SmartHomeESP32.local/api/Accs/Mode", {
+    fetch("/api/Accs/Mode", {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
@@ -143,7 +143,7 @@ function accsOff() {
 function accsOn() {
     accsData.mode = modes.on;
     // Enviar la petición GET con un header personalizado
-    fetch("http://SmartHomeESP32.local/api/Accs/Mode", {
+    fetch("/api/Accs/Mode", {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
@@ -159,7 +159,7 @@ function accsOn() {
 function tempOff() {
     tempData.status = modes.off;
 
-    fetch("http://SmartHomeESP32.local/api/Temp/Mode", {
+    fetch("/api/Temp/Mode", {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
@@ -173,7 +173,7 @@ function tempOff() {
 
 function tempOn() {
     tempData.status = modes.on;
-    fetch("http://SmartHomeESP32.local/api/Temp/Mode", {
+    fetch("/api/Temp/Mode", {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
@@ -266,7 +266,7 @@ function getLightsData() {
 }
 
 function getAccsData() {
-    fetch('api/Accs/get')
+    fetch('/api/Accs/get')
         .then(response => response.json())
         .then(data => {
             const tbodyaccsKey = document.getElementById('accsKey');

@@ -86,7 +86,7 @@ function updateLights() {
     };
 
 
-    fetch("http://SmartHomeESP32.local/api/Lights/Update", {
+    fetch("/api/Lights/Update", {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
@@ -103,7 +103,7 @@ function updateLights() {
 
 function lightOff() {
     // Enviar la petición GET con un header personalizado
-    fetch("http://SmartHomeESP32.local/api/Light/Mode", {
+    fetch("/api/Light/Mode", {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
@@ -117,7 +117,7 @@ function lightOff() {
 
 function lightOn() {
     // Enviar la petición GET con un header personalizado
-    fetch("http://SmartHomeESP32.local/api/Light/Mode", {
+    fetch("/api/Light/Mode", {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',

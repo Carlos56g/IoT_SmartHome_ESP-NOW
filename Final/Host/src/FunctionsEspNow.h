@@ -175,6 +175,7 @@ void static initEspNow()
 {
 	controlStatusLED(WAITING);
 	WiFi.mode(WIFI_AP_STA); // Modo AP y Station HOST
+
 	// WiFi.mode(WIFI_AP); //Modo AP MODULO
 	Serial.printf("\n\nConectando a la RED: %s\n", ssid);
 	WiFi.begin(ssid, password);

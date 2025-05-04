@@ -94,7 +94,7 @@ function tempOff() {
     tempData.mode = document.getElementById("tempModeSelect").value
     tempData.desiredTemperature = document.getElementById("desiredTemperatureInput").value
 
-    fetch("http://SmartHomeESP32.local/api/Temp/Mode", {
+    fetch("/api/Temp/Mode", {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
@@ -111,7 +111,7 @@ function tempOn() {
     tempData.mode = document.getElementById("tempModeSelect").value
     tempData.desiredTemperature = document.getElementById("desiredTemperatureInput").value
 
-    fetch("http://SmartHomeESP32.local/api/Temp/Mode", {
+    fetch("/api/Temp/Mode", {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
@@ -131,7 +131,7 @@ function updateTempData() {
         tempData.desiredTemperature = document.getElementById("desiredTemperatureInput").value
     }
 
-    fetch("http://SmartHomeESP32.local/api/Temp/Mode", {
+    fetch("/api/Temp/Mode", {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
@@ -150,7 +150,7 @@ function saveTempProg() {
     tempData.tempDataProg.onDate = document.getElementById("onTempDate").value
     const error = document.getElementById('alert');
     if (validateDate(tempData.tempDataProg.onDate, tempData.tempDataProg.offDate)) {
-        fetch("http://SmartHomeESP32.local/api/TempProg/Update", {
+        fetch("/api/TempProg/Update", {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',

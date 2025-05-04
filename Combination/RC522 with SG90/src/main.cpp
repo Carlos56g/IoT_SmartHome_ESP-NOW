@@ -110,10 +110,11 @@ bool validateAccess(byte *data)
 
 void unlockAccess(Servo &servo, int servoProperties[3])
 {
+  Serial.print("Abriendo...");
   digitalWrite(statusLed,HIGH);
-  servoMove(2000, 180, 0, servo, servoProperties);
+  servoMove(2000, 90, 0, servo, servoProperties);
   delay(2000);
-  servoMove(2000, -180, 180, servo, servoProperties);
+  servoMove(2000, -90, 90, servo, servoProperties);
   digitalWrite(statusLed,LOW);
 }
 

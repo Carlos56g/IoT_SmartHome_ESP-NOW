@@ -102,6 +102,7 @@ void initAHT20()
   {
     Serial.println(F("No se ha conectado AHT20 o falló al cargar el coeficiente de calibración")); //(F()) guarda el string en la Flash para mantener la memoria dinámica libre
     delay(5000);
+    controlStatusLED(ERROR);
   }
   Serial.println(F("AHT20 OK"));
 

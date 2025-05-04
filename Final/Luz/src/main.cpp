@@ -184,10 +184,10 @@ void initLightDevices()
   lightData.lightDev[3].pin = LED4_PIN;
 
   // Pines de los sensores de presencia
-  lightData.lightDev[0].presencePin = S1_PIN;
-  lightData.lightDev[1].presencePin = S2_PIN;
-  lightData.lightDev[2].presencePin = -1;
-  lightData.lightDev[3].presencePin = -1;
+  lightData.lightDev[0].presencePin = -1;
+  lightData.lightDev[1].presencePin = -1;
+  lightData.lightDev[2].presencePin = S2_PIN;
+  lightData.lightDev[3].presencePin = S1_PIN;
 
   for (int i = 0; i < numLightDevices; i++)
   {

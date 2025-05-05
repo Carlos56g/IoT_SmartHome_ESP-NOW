@@ -113,7 +113,7 @@ void onDataReceived(const uint8_t *mac, const uint8_t *data, int len)
 		break;
 	case accsModule: // Accs
 		controlStatusLED(RECEIVEDACCS);
-		memcpy(&receivedData.accessModule, data, sizeof(accsDevice));						   // Copiamos los datos recividos a la variable global
+		memcpy(&receivedData.accessModule, data, sizeof(accsDevice));						   // Copiamos los datos recibidos a la variable global
 		getActualDate(receivedData.accessModule.date, sizeof(receivedData.accessModule.date)); // Actualizamos la fecha de los datos
 		accsEvent accsHistoryData;															   // Creamos una nueva variable para almacenar el acceso recibido
 		strcpy(accsHistoryData.key, receivedData.accessModule.key);							   // llenamos el struct
@@ -189,11 +189,14 @@ void static initEspNow()
 	Serial.print(WiFi.localIP());
 	Serial.printf("\nCanal Wifi: %d\n\n", WiFi.channel());
 
-	if (!MDNS.begin("smarthomeesp32")) {
-        Serial.println("Error iniciando mDNS");
-    } else {
-        Serial.println("mDNS iniciado: http://smarthomeesp32.local/");
-    }
+	if (!MDNS.begin("smarthomeesp32"))
+	{
+		Serial.println("Error iniciando mDNS");
+	}
+	else
+	{
+		Serial.println("mDNS iniciado: http://smarthomeesp32.local/");
+	}
 
 	if (esp_now_init() != ESP_OK)
 	{

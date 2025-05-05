@@ -5,7 +5,7 @@
 
 #define RST_PIN 33
 #define SS_PIN 5
-#define accesKey "CarlosGarcia1234" //16 bytes maximo
+#define accesKey "CarlosGarcia1234" // 16 bytes maximo
 #define statusLed 13
 
 Servo servo0;                              // Objeto tipo Servo
@@ -35,13 +35,13 @@ void setup()
     ;                 // Do nothing if no serial port is opened (added for Arduinos based on ATMEGA32U4)
   SPI.begin();        // Init SPI bus
   mfrc522.PCD_Init(); // Init MFRC522 card
-  pinMode(statusLed,OUTPUT);
+  pinMode(statusLed, OUTPUT);
 }
 
 void loop()
 {
-  //writeKey(accesKey);
-  accessWithNFC();
+  // writeKey(accesKey);
+  unlockAccess(servo0, servo0Proporties);
 }
 
 bool writeNFCData(byte *data)
@@ -98,24 +98,24 @@ bool validateAccess(byte *data)
     return true;
   }
   Serial.print("Denied");
-  digitalWrite(statusLed,HIGH);
+  digitalWrite(statusLed, HIGH);
   delay(300);
-  digitalWrite(statusLed,LOW);
+  digitalWrite(statusLed, LOW);
   delay(300);
-  digitalWrite(statusLed,HIGH);
+  digitalWrite(statusLed, HIGH);
   delay(300);
-  digitalWrite(statusLed,LOW);
+  digitalWrite(statusLed, LOW);
   return false;
 }
 
 void unlockAccess(Servo &servo, int servoProperties[3])
 {
   Serial.print("Abriendo...");
-  digitalWrite(statusLed,HIGH);
+  digitalWrite(statusLed, HIGH);
   servoMove(2000, 90, 0, servo, servoProperties);
-  delay(2000);
+  delay(10000);
   servoMove(2000, -90, 90, servo, servoProperties);
-  digitalWrite(statusLed,LOW);
+  digitalWrite(statusLed, LOW);
 }
 
 bool accessWithNFC()

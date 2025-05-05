@@ -2,48 +2,54 @@
 <html>
 
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
   <title>Programar Encendido Modulo de Temperatura</title>
-  <link rel="stylesheet" href="../style.css">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Cal+Sans&display=swap" rel="stylesheet">
-  <link href="https://fonts.googleapis.com/css2?family=Lexend:wght@100..900&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <link rel="stylesheet" href="../style.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cal+Sans&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Lexend:wght@100..900&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
+  <link rel="icon" href="../favicon.ico" type="image/x-icon" />
 </head>
 
 <body onload="getTempData()">
-
   <a href="/Temp/Details" class="home">
     <button>
-      <i class="fa fa-arrow-left"></i> <!-- Ícono de flecha hacia atrás -->
+      <i class="fa fa-arrow-left"></i>
+      <!-- Ícono de flecha hacia atrás -->
     </button>
   </a>
 
-  <h1 style="text-align:center;">Programar Encendido del Modulo de Temperatura</h1>
+  <h1 style="text-align: center">
+    Programar Encendido del Modulo de Temperatura
+  </h1>
 
-  <h2>Modo: </h2>
-  <select name="select" id="tempProgModeSelect">
-    <option value="O">Automatico</option>
-    <option value="P" selected>Caliente</option>
-    <option value="Q">Frio</option>
-    <option value="R">Solo Aire</option>
-  </select>
+  <div>
+    <h2>Modo:</h2>
+    <select name="select" id="tempProgModeSelect" onchange="validateMode()">
+      <option value="O">Automatico</option>
+      <option value="P" selected>Caliente</option>
+      <option value="Q">Frio</option>
+      <option value="R">Solo Aire</option>
+    </select>
 
-  <h2>Temperatura Deseada: </h2>
-  <input type="number"
-    id="desiredProgTemperatureInput"><!--Se Supone que se debe de desactivar si el modo es diferente a automatico-->
+    <h2>Temperatura Deseada:</h2>
+    <input type="number" id="desiredProgTemperatureInput" min="18"
+      max="32" /><!--Se Supone que se debe de desactivar si el modo es diferente a automatico-->
 
-  <h2>Fecha </h2>
-  <label for="inicio">Encendido:</label>
-  <input type="datetime-local" id="onTempDate" name="inicio">
-  <br><br>
-  <label for="fin">Apagado:</label>
-  <input type="datetime-local" id="offTempDate" name="fin">
-  <p id="alert" style="color: red;"></p>
-  <br><br>
-  <button id="saveProg" onclick="saveTempProg()">Guardar Programacion</button>
-
+    <h2>Fecha</h2>
+    <label for="inicio">Encendido:</label>
+    <input type="datetime-local" id="onTempDate" name="inicio" />
+    <br /><br />
+    <label for="fin">Apagado:</label>
+    <input type="datetime-local" id="offTempDate" name="fin" />
+    <p id="alert" style="color: red"></p>
+    <br /><br />
+    <button id="saveProg" onclick="saveTempProg()">
+      Guardar Programacion
+    </button>
+  </div>
 
   <script src="script.js"></script>
 </body>

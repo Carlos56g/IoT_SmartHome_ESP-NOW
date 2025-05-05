@@ -9,5 +9,5 @@ const uint8_t* MACS[] = {MAC_HOST,MAC_TEMP,MAC_LGHT,MAC_ACCS};
 const uint8_t MACS_COUNT = sizeof(MACS) / sizeof(uint8_t*);
 
 // Credenciales de la Red
-const char *ssid = "Xiaomi_F85B";// "Carlos S23"; // //;
-const char *password =  "88889999"; //"56565656"; // //;
+const char *ssid ="Carlos S23"; //"Xiaomi_F85B";// "Carlos S23"; // //;
+const char *password = "56565656"; //"88889999"; // // //;

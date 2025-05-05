@@ -7,9 +7,9 @@
 
 #define SDA_PIN 21
 #define SCL_PIN 22
-#define fanC 17 //Ventilador Frio (x3 12v) 
-#define fanH 16 //Ventilador Caliente Frontal (5v)
-#define fanA 4 //Ventilador Caliente Trasero (5v)
+#define fanC 17 // Ventilador Frio (x3 12v)
+#define fanH 16 // Ventilador Caliente Frontal (5v)
+#define fanA 4  // Ventilador Caliente Trasero (5v)
 #define peltier 32
 float temperatureMargin = 3; // Intervalo de Temperatura, no modificable por el usuario
 char prevStatus;
@@ -60,6 +60,8 @@ void controlTemperatureModule()
 {
   if (tempData.status != off)
   {
+    tempData.actualTemperature = myAHT20.getTemperature();
+    tempData.actualHumidity = myAHT20.getHumidity();
     controlStatusLED(CLEAR);
     switch (tempData.mode)
     {
@@ -80,14 +82,13 @@ void controlTemperatureModule()
       break;
 
     case autoMode:
-      tempData.actualTemperature = myAHT20.getTemperature();
-      tempData.actualHumidity = myAHT20.getHumidity();
       controlTempDevice(validateDesiredTemperature());
       break;
     }
   }
-  else{
-    controlStatusLED(OFF);
+  else
+  {
+    controlStatusLED(off);
     controlTempDevice(off);
   }
 }
@@ -174,42 +175,48 @@ void controlTempDevice(char mode)
     digitalWrite(fanH, LOW);
     digitalWrite(fanA, LOW);
     digitalWrite(peltier, HIGH);
-    tempData.status=off;
+    tempData.status = off;
     break;
   }
 }
 
-void controlTempProgram(){
-  struct tm actualTime; 
+void controlTempProgram()
+{
+  struct tm actualTime;
 
-  if(strlen(tempData.tempDataProg.onDate) > 0)//Encendido Automatico
+  if (strlen(tempData.tempDataProg.onDate) > 0) // Encendido Automatico
   {
-    while (!getLocalTime(&actualTime)) { //Obtenemos la fecha actual
-      sendData(requestTime,tempData);
+    while (!getLocalTime(&actualTime))
+    { // Obtenemos la fecha actual
+      sendData(requestTime, tempData);
     };
 
     tm tmOnDate = convertStringToTm(tempData.tempDataProg.onDate);
-    //Si el tiempo de encendido es menor al tiempo actual, significa que debe de encenderse
-    if(mktime(&tmOnDate)<mktime(&actualTime)){
-      tempData.mode=tempData.tempDataProg.mode;
-      tempData.desiredTemperature=tempData.tempDataProg.desiredTemperature;
-      tempData.status=on;
+    // Si el tiempo de encendido es menor al tiempo actual, significa que debe de encenderse
+    if (mktime(&tmOnDate) < mktime(&actualTime))
+    {
+      tempData.mode = tempData.tempDataProg.mode;
+      tempData.desiredTemperature = tempData.tempDataProg.desiredTemperature;
+      tempData.status = on;
     }
   }
 
-  if(strlen(tempData.tempDataProg.offDate) > 0){
-    while (!getLocalTime(&actualTime)) { //Obtenemos la fecha actual
-      sendData(requestTime,tempData);
-      };
+  if (strlen(tempData.tempDataProg.offDate) > 0)
+  {
+    while (!getLocalTime(&actualTime))
+    { // Obtenemos la fecha actual
+      sendData(requestTime, tempData);
+    };
 
-      tm tmOffDate = convertStringToTm(tempData.tempDataProg.offDate);
-      //Si el tiempo de apagado es menor al tiempo actual, significa que debe de apagarse
-      if(mktime(&tmOffDate)<mktime(&actualTime)){
-        tempData.status=off;
-        strcpy(tempData.tempDataProg.offDate, ""); // Ensure offDate is a modifiable character array
-        strcpy(tempData.tempDataProg.onDate, "");
-      }
+    tm tmOffDate = convertStringToTm(tempData.tempDataProg.offDate);
+    // Si el tiempo de apagado es menor al tiempo actual, significa que debe de apagarse
+    if (mktime(&tmOffDate) < mktime(&actualTime))
+    {
+      tempData.status = off;
+      strcpy(tempData.tempDataProg.offDate, ""); // Ensure offDate is a modifiable character array
+      strcpy(tempData.tempDataProg.onDate, "");
     }
+  }
 
   char buffer[25];
   strftime(buffer, sizeof(buffer), "%Y-%m-%dT%H:%M:%S", &actualTime);

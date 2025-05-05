@@ -166,9 +166,9 @@ void static InitEspNow()
 	// WiFi.mode(WIFI_AP_STA); //Modo AP y Station HOST
 	WiFi.mode(WIFI_AP); // Modo AP MODULO
 
-	esp_wifi_set_promiscuous(true);
+	/*esp_wifi_set_promiscuous(true);
 	esp_wifi_set_channel(11, WIFI_SECOND_CHAN_NONE); // Canal primario = 11 //Cuando se conecta a la red hotspot del Celular Comentar Esta linea (ya que el canal se pone como 1)
-	esp_wifi_set_promiscuous(false);
+	esp_wifi_set_promiscuous(false);*/
 
 	if (esp_now_init() != ESP_OK)
 	{

@@ -12,7 +12,7 @@
 accsDevice accsData;
 Servo servo0;                              // Objeto tipo Servo
 int servo0Proporties[3] = {32, 500, 2400}; // PIN, Min, Max
-statusLED led; 
+statusLED led;
 MFRC522::StatusCode status; // variable to get card status
 
 MFRC522 mfrc522(SS_PIN, RST_PIN); // Create MFRC522 instance.
@@ -33,7 +33,7 @@ void saveKey(char *key);
 void readKeys();
 void controlAccess();
 
-char prevStatus=accsData.status;
+char prevStatus = accsData.status;
 
 void setup()
 {
@@ -56,6 +56,7 @@ void setup()
   servo0.attach(servo0Proporties[0], servo0Proporties[1], servo0Proporties[2]);
   InitEspNow();
   readKeys(); // Leera todas las llaves de acceso
+  sendData(sendActualData, accsData);
   controlStatusLED(CLEAR);
 }
 
@@ -144,13 +145,14 @@ void controlAccess()
   if (newAction)
   {
     printAccsDevice(accsData);
+    delay(1000);
     sendData(sendActualData, accsData);
 
     // Evita que haya un bucle despues de aceptar o denegar a alguien
     if (accsData.status == deny || accsData.status == accept)
       accsData.status = on;
 
-    prevStatus=accsData.status;
+    prevStatus = accsData.status;
   }
 }
 

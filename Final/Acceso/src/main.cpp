@@ -11,7 +11,11 @@
 // Struct del modulo  de Acceso
 accsDevice accsData;
 Servo servo0;                              // Objeto tipo Servo
+<<<<<<< HEAD
 int servo0Proporties[3] = {32, 600, 2500}; // PIN, Min, Max
+=======
+int servo0Proporties[3] = {32, 500, 2400}; // PIN, Min, Max
+>>>>>>> 5c8f54a79a755ae0292c1df63c1de3f427a01be6
 statusLED led;
 MFRC522::StatusCode status; // variable to get card status
 

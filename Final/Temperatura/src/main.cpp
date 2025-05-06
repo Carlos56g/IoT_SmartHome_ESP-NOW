@@ -227,7 +227,10 @@ void controlTempDevice(char mode)
     digitalWrite(fanA, LOW);
     digitalWrite(peltier, HIGH);
     tempData.status = off;
+<<<<<<< HEAD
     controlStatusLED(OFF);
+=======
+>>>>>>> 5c8f54a79a755ae0292c1df63c1de3f427a01be6
     break;
   }
 }
@@ -264,7 +267,10 @@ void controlTempProgram()
     // Si el tiempo de apagado es menor al tiempo actual, significa que debe de apagarse
     if (mktime(&tmOffDate) < mktime(&actualTime))
     {
+<<<<<<< HEAD
       tempData.mode = off;
+=======
+>>>>>>> 5c8f54a79a755ae0292c1df63c1de3f427a01be6
       tempData.status = off;
       strcpy(tempData.tempDataProg.offDate, ""); // Ensure offDate is a modifiable character array
       strcpy(tempData.tempDataProg.onDate, "");

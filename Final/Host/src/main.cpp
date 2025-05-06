@@ -13,6 +13,10 @@ statusLED led;
 
 AsyncWebServer Server(80); // Numero de Puerto a Usar
 
+bool resultAccs = true;
+bool resultLight = true;
+bool resultTemp = true;
+
 void setup()
 {
   initializeLED();
@@ -207,34 +211,69 @@ void setup()
 
   Server.on("/api/Temp/get", HTTP_GET, [](AsyncWebServerRequest *request)
             {
-              requestModule(tempModule, requestData); // Pedimos los Datos
               JsonDocument doc;
-              doc = updateDoc(tempModule); // Actualizamos la respuesta con los datos recibidos
-              String output;
-              serializeJson(doc, output);                     // Serializa el JSON
-              request->send(200, "application/json", output); // Envia la respuesta
-            });
+              requestModule(tempModule, requestData);
+              if(resultTemp!=ESP_NOW_SEND_SUCCESS) // Pedimos los Datos
+              {
+                doc["error"] = "No fue posible establecer conexión con el módulo de Acceso";
+                String output;
+                serializeJson(doc, output);
+                request->send(400,"application/json",output);
+              }
+              else
+              {
+                doc = updateDoc(tempModule); // Actualizamos la respuesta con los datos recibidos
+                String output;
+                serializeJson(doc, output);                     // Serializa el JSON
+                request->send(200, "application/json", output); // Envia la respuesta
+              } });
 
   Server.on("/api/Lights/get", HTTP_GET, [](AsyncWebServerRequest *request)
             {
-              requestModule(lightModule, requestData); // Pedimos los Datos
               JsonDocument doc;
+              requestModule(lightModule, requestData);
+              if(resultLight!=ESP_NOW_SEND_SUCCESS) // Pedimos los Datos)
+              {
+                doc["error"] = "No fue posible establecer conexión con el módulo de Luz";
+                String output;
+                serializeJson(doc, output);
+                request->send(400,"application/json",output);
+              }
+              else
+              {
               doc = updateDoc(lightModule);
               String output;
               serializeJson(doc, output);                     // Serializa el JSON
               request->send(200, "application/json", output); // Envia la respuesta
-            });
+              } });
   Server.on("/api/Accs/get", HTTP_GET, [](AsyncWebServerRequest *request)
             {
               JsonDocument doc;
+              if(receivedData.accessModule.mode == NULL){ //Solamente el primer Request
+                requestModule(accsModule,requestData);
+                if(resultAccs != ESP_NOW_SEND_SUCCESS){
+                  doc["error"] = "No fue posible establecer conexión con el módulo de Acceso";
+                  String output;
+                  serializeJson(doc, output);
+                  request->send(400,"application/json",output);
+                }
+              }
               doc = updateDoc(accsModule);
               String output;
               serializeJson(doc, output);                     // Serializa el JSON
               request->send(200, "application/json", output); // Envia la respuesta
-            });
+              });
 
   Server.on("/api/Accs/trigger", HTTP_GET, [](AsyncWebServerRequest *request)
             {
+              JsonDocument doc;
+              requestModule(accsModule,rUHere);
+              if(resultAccs != ESP_NOW_SEND_SUCCESS){
+                doc["error"] = "No fue posible establecer conexión con el módulo de Acceso";
+                String output;
+                serializeJson(doc, output);
+                request->send(400,"application/json",output);
+              }
               if(newAccsAction){ //Variable global, es true cuando se reciben datos de parte del modulo de Acceso (por lo tanto, hubo un nuevo acceso)
                 request->send(200, "application/json"); // Envia la respuesta
                 newAccsAction=false;

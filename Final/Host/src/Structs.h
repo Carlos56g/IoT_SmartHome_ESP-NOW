@@ -11,7 +11,8 @@ enum ESPNowActions
   requestData = 'B',
   requestTime = 'C',
   sendActualData = 'M',
-  restart = 'Z'
+  restart = 'Z',
+  rUHere = 'a'
 };
 
 enum ModulesID
@@ -86,7 +87,7 @@ struct lightDevice
 struct lightDevices
 {
   lightDevice lightDev[numLightDevices];
-  bool on;
+  bool on=NULL;
 };
 
 struct tempDeviceProgram
@@ -103,8 +104,8 @@ struct tempDevice
   float desiredTemperature = 33; // Temperatura Deseada
   float actualTemperature = 0;   // Temperatura Actual
   float actualHumidity = 0;      // Humedad Actual
-  char mode = autoMode;          // Modo de Operacion Auto, caliente, frio, solo aire
-  char status = on;              // Encendido, Apagado, Esperando
+  char mode=NULL;          // Modo de Operacion Auto, caliente, frio, solo aire
+  char status=NULL;              // Encendido, Apagado, Esperando
   tempDeviceProgram tempDataProg;
 };
 
@@ -112,10 +113,10 @@ struct tempDevice
 struct accsDevice
 {
   char key[16];                // Almacena la llave de acceso
-  char mode = AccsNFC;         // Contiene el Modo
+  char mode=NULL;         // Contiene el Modo
   char keys[MAX_KEYS_NUM][16]; // Contiene todas las llaves de Acceso Almacenadas, 100 Keys de 16 Caracteres
-  char status = on;            // Contiene el Status
-  char date[20];               // Almacena la fecha de Acceso
+  char status=NULL;            // Contiene el Status
+  char date[20];              // Almacena la fecha de Acceso
 };
 
 // Struct para un Acceso
@@ -149,5 +150,11 @@ struct statusLED
 extern statusLED led;
 extern espNowData receivedData;
 extern std::list<accsEvent> accsHistory; // Lista global dinamica
+
+extern bool resultAccs;
+extern  bool resultLight;
+extern  bool resultTemp;
+extern std::list<accsEvent> accsHistory; // Lista global dinamica
+
 extern bool newAccsAction = true;
 #endif

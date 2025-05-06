@@ -248,6 +248,7 @@ JsonDocument updateDoc(char module)
     doc["actualHumidity"] = receivedData.temperatureModule.actualHumidity;
     doc["desiredTemperature"] = receivedData.temperatureModule.desiredTemperature;
     doc["mode"] = (signed char)receivedData.temperatureModule.mode;
+    doc["status"] = (signed char)receivedData.temperatureModule.status;
     doc["tempDataProg"]["mode"] = (signed char)receivedData.temperatureModule.tempDataProg.mode;
     doc["tempDataProg"]["onDate"] = receivedData.temperatureModule.tempDataProg.onDate;
     doc["tempDataProg"]["offDate"] = receivedData.temperatureModule.tempDataProg.offDate;

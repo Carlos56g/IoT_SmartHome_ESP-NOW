@@ -11,10 +11,27 @@
 #include <ESPmDNS.h>
 
 void sendDate(int peekID);
+int searchSender(const uint8_t *mac);
 
 // Se ejecutará cada que se ENVIEN datos con ESP-NOW
 void onDataSent(const uint8_t *mac_addr, esp_now_send_status_t status)
 {
+	int ID = searchSender(mac_addr);
+
+	switch (ID)
+	{
+	case accsModule:
+		resultAccs = status;
+		break;
+	case lightModule:
+		resultLight = status;
+		break;
+	case tempModule:
+		resultTemp = status;
+		break;
+		break;
+	}
+	
 	if (status == ESP_NOW_SEND_SUCCESS)
 		controlStatusLED(CLEAR);
 	else
@@ -216,9 +233,9 @@ void static initEspNow()
 	}
 }
 
-void requestModule(int peerID, char action)
+bool requestModule(int peerID, char action)
 { // ACCESO: K=Eliminar LLaves, D=Request Data
-	esp_now_send(MACS[peerID], (uint8_t *)&action, sizeof(char));
+	return esp_now_send(MACS[peerID], (uint8_t *)&action, sizeof(char));
 }
 
 #endif

@@ -9,7 +9,7 @@
 
 espNowData receivedData;
 std::list<accsEvent> accsHistory;
-statusLED led; 
+statusLED led;
 
 AsyncWebServer Server(80); // Numero de Puerto a Usar
 
@@ -25,7 +25,7 @@ void setup()
     return;
   }
 
-  //Cliente
+  // Cliente
   Server.on("/", HTTP_GET, [](AsyncWebServerRequest *request)
             { request->send(SPIFFS, "/index.html", "text/html"); });
 
@@ -40,15 +40,14 @@ void setup()
 
   Server.on("/Temp/Schedule", HTTP_GET, [](AsyncWebServerRequest *request)
             { request->send(SPIFFS, "/Temp/Schedule.html", "text/html"); });
-  
+
   Server.on("/Temp/Details", HTTP_GET, [](AsyncWebServerRequest *request)
             { request->send(SPIFFS, "/Temp/Details.html", "text/html"); });
 
   Server.on("/Light/Details", HTTP_GET, [](AsyncWebServerRequest *request)
             { request->send(SPIFFS, "/Light/Details.html", "text/html"); });
 
-
-  //API
+  // API
   Server.on("/api/Accs/Keys/get", HTTP_GET, [](AsyncWebServerRequest *request)
             {
               requestModule(accsModule, requestData);
@@ -141,7 +140,7 @@ void setup()
     sendData(tempModule, receivedData);
     request->send(200, "application/json", "{\"status\":\"ok\"}"); });
 
-    Server.on("/api/Light/Mode", HTTP_POST, [](AsyncWebServerRequest *request) {}, NULL, [](AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total)
+  Server.on("/api/Light/Mode", HTTP_POST, [](AsyncWebServerRequest *request) {}, NULL, [](AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total)
             {
     String body = String((char*)data).substring(0, len);
     JsonDocument doc;
@@ -158,7 +157,6 @@ void setup()
 
     sendData(lightModule, receivedData);
     request->send(200, "application/json", "{\"status\":\"ok\"}"); });
-
 
   Server.on("/api/Lights/Update", HTTP_POST, [](AsyncWebServerRequest *request) {}, NULL, [](AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total)
             {
@@ -181,10 +179,11 @@ void setup()
     // Asignar los valores del JSON al struct, haciendo la conversión de char a unsigned char
     updateLightsData(doc);
     sendData(lightModule, receivedData);
+    printLightDevices(receivedData.lightModule);
     request->send(200, "application/json", "{\"status\":\"ok\"}"); });
 
   Server.on("/api/TempProg/Update", HTTP_POST, [](AsyncWebServerRequest *request) {}, NULL, [](AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total)
-    {
+            {
     String body = String((char*)data).substring(0, len);
 
     Serial.println("📩 Body recibido:");
@@ -222,7 +221,7 @@ void setup()
               JsonDocument doc;
               doc = updateDoc(lightModule);
               String output;
-              serializeJson(doc, output);           // Serializa el JSON                   
+              serializeJson(doc, output);                     // Serializa el JSON
               request->send(200, "application/json", output); // Envia la respuesta
             });
   Server.on("/api/Accs/get", HTTP_GET, [](AsyncWebServerRequest *request)
@@ -230,45 +229,40 @@ void setup()
               JsonDocument doc;
               doc = updateDoc(accsModule);
               String output;
-              serializeJson(doc, output);           // Serializa el JSON            
+              serializeJson(doc, output);                     // Serializa el JSON
               request->send(200, "application/json", output); // Envia la respuesta
             });
 
   Server.on("/api/Accs/trigger", HTTP_GET, [](AsyncWebServerRequest *request)
             {
-              if(newAccsAction){
+              if(newAccsAction){ //Variable global, es true cuando se reciben datos de parte del modulo de Acceso (por lo tanto, hubo un nuevo acceso)
                 request->send(200, "application/json"); // Envia la respuesta
                 newAccsAction=false;
               }
               else
-                request->send(201, "application/json");
-            });
-
-  
+                request->send(201, "application/json"); });
 
   // Archivos estáticos
 
-  //Index
+  // Index
   Server.serveStatic("/style.css", SPIFFS, "/style.css");
   Server.serveStatic("/scriptHome.js", SPIFFS, "/scriptHome.js");
 
-  //Temp
+  // Temp
   Server.serveStatic("/Temp/script.js", SPIFFS, "/Temp/script.js");
 
-  //Accs
+  // Accs
   Server.serveStatic("/Accs/script.js", SPIFFS, "/Accs/script.js");
 
-  //Light
+  // Light
   Server.serveStatic("/Light/script.js", SPIFFS, "/Light/script.js");
 
-
   Server.on("/reload", HTTP_GET, [](AsyncWebServerRequest *request)
-  {
+            {
     requestModule(lightModule,restart);
     requestModule(accsModule,restart);
     requestModule(tempModule,restart);
-    ESP.restart();
-  });
+    ESP.restart(); });
 
   Server.begin();
 }

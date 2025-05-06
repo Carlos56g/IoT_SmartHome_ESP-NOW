@@ -29,7 +29,7 @@ function getLightsData() {
         .then(data => {
             const tbody = document.getElementById('lightsBody');
             tbody.innerHTML = "";
-            data.forEach((light, index) => {
+            data.lightDevices.forEach((light, index) => {
                 const row = document.createElement('tr');
                 row.innerHTML = `
             <td>${index + 1}</td>

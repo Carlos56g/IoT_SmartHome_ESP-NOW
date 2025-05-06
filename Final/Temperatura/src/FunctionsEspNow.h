@@ -94,7 +94,17 @@ void onDataReceived(const uint8_t *mac, const uint8_t *data, int len)
 		// SOLO PUEDE RECIBIR DEL HOST
 		else if (len == sizeof(tempDevice))
 		{
+			float lastDesiredTemperature;
+			tempData.desiredTemperature = lastDesiredTemperature;
 			memcpy(&tempData, data, sizeof(tempDevice));
+			if (lastDesiredTemperature != tempData.desiredTemperature)
+			{
+				onChangedDesiredTemperature = true;
+			}
+			else
+			{
+				onChangedDesiredTemperature = false;
+			}
 		}
 		else if (len == sizeof(char[20])) // Si tiene
 		{
@@ -166,9 +176,9 @@ void static InitEspNow()
 	// WiFi.mode(WIFI_AP_STA); //Modo AP y Station HOST
 	WiFi.mode(WIFI_AP); // Modo AP MODULO
 
-	esp_wifi_set_promiscuous(true);
+	/*esp_wifi_set_promiscuous(true);
 	esp_wifi_set_channel(11, WIFI_SECOND_CHAN_NONE); // Canal primario = 11 //Cuando se conecta a la red hotspot del Celular Comentar Esta linea (ya que el canal se pone como 1)
-	esp_wifi_set_promiscuous(false);
+	esp_wifi_set_promiscuous(false);*/
 
 	if (esp_now_init() != ESP_OK)
 	{

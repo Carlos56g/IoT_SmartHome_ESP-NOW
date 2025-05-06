@@ -13,7 +13,8 @@
 
 void controlStatusLED(char state);
 
-void printTempDevice(const tempDevice& device) {
+void printTempDevice(const tempDevice &device)
+{
   Serial.println("===== tempDevice Info =====");
 
   Serial.print("Modo: ");
@@ -45,11 +46,8 @@ void printTempDevice(const tempDevice& device) {
   Serial.print("Temperatura programada: ");
   Serial.println(device.tempDataProg.desiredTemperature);
 
-  
-
   Serial.println("=========================");
 }
-
 
 void setDateString(char *date)
 {
@@ -85,18 +83,19 @@ void setDateString(char *date)
   Serial.println(date);
 }
 
-tm convertStringToTm(char* date){
+tm convertStringToTm(char *date)
+{
   tm timeInfo;
   memset(&timeInfo, 0, sizeof(timeInfo));
 
   sscanf(date, "%d-%d-%dT%d:%d:%d",
-    &timeInfo.tm_year, &timeInfo.tm_mon, &timeInfo.tm_mday,
-    &timeInfo.tm_hour, &timeInfo.tm_min, &timeInfo.tm_sec);
-    
-    timeInfo.tm_year -= 1900; // tm_year = años desde 1900
-    timeInfo.tm_mon -= 1;     // tm_mon es 0-11
+         &timeInfo.tm_year, &timeInfo.tm_mon, &timeInfo.tm_mday,
+         &timeInfo.tm_hour, &timeInfo.tm_min, &timeInfo.tm_sec);
 
-    return timeInfo;
+  timeInfo.tm_year -= 1900; // tm_year = años desde 1900
+  timeInfo.tm_mon -= 1;     // tm_mon es 0-11
+
+  return timeInfo;
 }
 
 void initializeLED()
@@ -141,26 +140,26 @@ void controlStatusLED(char state)
     ledcWrite(led.greenPwm, 0);
     break;
 
-  case PELTIERON:               // '4'
+  case COLD:                    // '4'
     ledcWrite(led.redPwm, 255); // Naranja (Rojo fuerte + Verde medio)
     ledcWrite(led.greenPwm, 128);
     ledcWrite(led.bluePwm, 0);
     break;
 
-  case PELTIEROFF:                 // '5'
+  case HOT:                      // '5'
     ledcWrite(led.bluePwm, 255); // Violeta (Azul + Rojo medio)
     ledcWrite(led.redPwm, 128);
     ledcWrite(led.greenPwm, 0);
     break;
 
-  case DATASENDED: // '6'
-    ledcWrite(led.greenPwm, 255);  // Amarillo (Rojo medio + Verde fuerte)
+  case DATASENDED:                // '6'
+    ledcWrite(led.greenPwm, 255); // Amarillo (Rojo medio + Verde fuerte)
     ledcWrite(led.redPwm, 128);
     ledcWrite(led.bluePwm, 0);
     break;
 
-  case DATARECEIVED: // '7'
-    ledcWrite(led.greenPwm, 255);  // Cian (Verde + Azul fuerte)
+  case DATARECEIVED:              // '7'
+    ledcWrite(led.greenPwm, 255); // Cian (Verde + Azul fuerte)
     ledcWrite(led.bluePwm, 255);
     ledcWrite(led.redPwm, 0);
     break;
@@ -171,8 +170,14 @@ void controlStatusLED(char state)
     ledcWrite(led.greenPwm, 0);
     ledcWrite(led.bluePwm, 0);
     break;
+
+  case AIR:
+    // Apagar el LED si el estado no se reconoce
+    ledcWrite(led.redPwm, 140);
+    ledcWrite(led.greenPwm, 30);
+    ledcWrite(led.bluePwm, 255);
+    break;
   }
 }
-
 
 #endif

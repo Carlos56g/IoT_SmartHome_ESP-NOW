@@ -10,6 +10,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Cal+Sans&display=swap" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css2?family=Lexend:wght@100..900&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <link rel="icon" href="../favicon.ico" type="image/x-icon">
 </head>
 
 <body>
@@ -37,7 +38,7 @@
     
 
     <h2>Temperatura Deseada: </h2>
-    <input type="number" id="desiredTemperatureInput" onchange="updateTempData()" class="custom-input"> <!--Se Supone que se debe de desactivar si el modo es diferente a automatico-->
+    <input type="number" id="desiredTemperatureInput" onchange="updateTempData()" class="custom-input"  min="18" max="32"> <!--Se Supone que se debe de desactivar si el modo es diferente a automatico-->
 
     <br><br>
     <a href="/Temp/Schedule">

@@ -7,11 +7,11 @@
 
 #define SDA_PIN 21
 #define SCL_PIN 22
-#define fanC 17 //Ventilador Frio (x3 12v) 
-#define fanH 16 //Ventilador Caliente Frontal (5v)
-#define fanA 4 //Ventilador Caliente Trasero (5v)
+#define fanC 17 // Ventilador Frio (x3 12v)
+#define fanH 16 // Ventilador Caliente Frontal (5v)
+#define fanA 4  // Ventilador Caliente Trasero (5v)
 #define peltier 32
-float temperatureMargin = 3; // Intervalo de Temperatura, no modificable por el usuario
+float temperatureMargin = 2; // Intervalo de Temperatura, no modificable por el usuario
 char prevStatus;
 
 // Objetos de tipo sensor
@@ -19,6 +19,7 @@ Adafruit_BMP280 myBMP; // Presion Atm
 AHT20 myAHT20;         // Temperatura y Humedad
 tempDevice tempData;
 statusLED led;
+bool onChangedDesiredTemperature = false;
 
 // Funciones
 char validateDesiredTemperature();
@@ -45,21 +46,73 @@ void loop()
   controlTempProgram();
 }
 
+bool prevTempHit = false;
+char lastAction = nothing;
 char validateDesiredTemperature()
 {
-  // Funcion que valida la temperatura
+  if (onChangedDesiredTemperature)
+  {
+    bool prevTempHit = false;
+    char lastAction = nothing;
+  }
+
+  bool onDesiredTemperature = false;
+  bool onDesiredMargin = false;
+  char action = nothing;
+  if (tempData.actualTemperature >= (tempData.desiredTemperature - (temperatureMargin / 10)) && tempData.actualTemperature <= (tempData.desiredTemperature + (temperatureMargin / 10)))
+  {
+    onDesiredTemperature = true;
+  }
+
   if (tempData.actualTemperature >= (tempData.desiredTemperature - (temperatureMargin / 2)) && tempData.actualTemperature <= (tempData.desiredTemperature + (temperatureMargin / 2)))
-    return nothing; // No hacer nada
-  if (tempData.actualTemperature > tempData.desiredTemperature + (temperatureMargin / 2))
-    return cold; // Encender para frio
-  if (tempData.actualTemperature < tempData.desiredTemperature - (temperatureMargin / 2))
-    return hot; // Encender para calor
+  {
+    onDesiredMargin = true;
+  }
+
+  if (onDesiredMargin && onDesiredTemperature)
+  {
+    delay(2000); // Para que se acerque un poco mas a la temperatura deseada
+    prevTempHit = true;
+  }
+
+  if (!onDesiredMargin)
+  {
+    if (!prevTempHit)
+    {
+      prevTempHit = false;
+      if (tempData.actualTemperature > tempData.desiredTemperature)
+      {
+        action = cold;
+      }
+
+      if (tempData.actualTemperature < tempData.desiredTemperature)
+      {
+        action = hot;
+      }
+    }
+    prevTempHit = false;
+    lastAction = action;
+  }
+  else
+  {
+    if (prevTempHit)
+    {
+      action = nothing;
+    }
+    else
+    {
+      action = lastAction;
+    }
+  }
+  return action;
 }
 
 void controlTemperatureModule()
 {
   if (tempData.status != off)
   {
+    tempData.actualTemperature = myAHT20.getTemperature();
+    tempData.actualHumidity = myAHT20.getHumidity();
     controlStatusLED(CLEAR);
     switch (tempData.mode)
     {
@@ -80,14 +133,13 @@ void controlTemperatureModule()
       break;
 
     case autoMode:
-      tempData.actualTemperature = myAHT20.getTemperature();
-      tempData.actualHumidity = myAHT20.getHumidity();
       controlTempDevice(validateDesiredTemperature());
       break;
     }
   }
-  else{
-    controlStatusLED(OFF);
+  else
+  {
+    controlStatusLED(off);
     controlTempDevice(off);
   }
 }
@@ -142,7 +194,7 @@ void controlTempDevice(char mode)
     digitalWrite(fanH, LOW);
     digitalWrite(fanA, LOW);
     digitalWrite(peltier, HIGH);
-    controlStatusLED(PELTIEROFF);
+    controlStatusLED(CLEAR);
     break;
 
   case cold:
@@ -150,7 +202,7 @@ void controlTempDevice(char mode)
     digitalWrite(fanH, LOW);
     digitalWrite(fanA, HIGH);
     digitalWrite(peltier, LOW);
-    controlStatusLED(PELTIERON);
+    controlStatusLED(COLD);
     break;
 
   case hot:
@@ -158,7 +210,7 @@ void controlTempDevice(char mode)
     digitalWrite(fanH, HIGH);
     digitalWrite(fanA, HIGH);
     digitalWrite(peltier, LOW);
-    controlStatusLED(PELTIERON);
+    controlStatusLED(HOT);
     break;
 
   case air:
@@ -166,7 +218,7 @@ void controlTempDevice(char mode)
     digitalWrite(fanC, HIGH);
     digitalWrite(fanA, HIGH);
     digitalWrite(peltier, HIGH);
-    controlStatusLED(PELTIEROFF);
+    controlStatusLED(AIR);
     break;
 
   case off:
@@ -174,42 +226,50 @@ void controlTempDevice(char mode)
     digitalWrite(fanH, LOW);
     digitalWrite(fanA, LOW);
     digitalWrite(peltier, HIGH);
-    tempData.status=off;
+    tempData.status = off;
+    controlStatusLED(OFF);
     break;
   }
 }
 
-void controlTempProgram(){
-  struct tm actualTime; 
+void controlTempProgram()
+{
+  struct tm actualTime;
 
-  if(strlen(tempData.tempDataProg.onDate) > 0)//Encendido Automatico
+  if (strlen(tempData.tempDataProg.onDate) > 0) // Encendido Automatico
   {
-    while (!getLocalTime(&actualTime)) { //Obtenemos la fecha actual
-      sendData(requestTime,tempData);
+    while (!getLocalTime(&actualTime))
+    { // Obtenemos la fecha actual
+      sendData(requestTime, tempData);
     };
 
     tm tmOnDate = convertStringToTm(tempData.tempDataProg.onDate);
-    //Si el tiempo de encendido es menor al tiempo actual, significa que debe de encenderse
-    if(mktime(&tmOnDate)<mktime(&actualTime)){
-      tempData.mode=tempData.tempDataProg.mode;
-      tempData.desiredTemperature=tempData.tempDataProg.desiredTemperature;
-      tempData.status=on;
+    // Si el tiempo de encendido es menor al tiempo actual, significa que debe de encenderse
+    if (mktime(&tmOnDate) < mktime(&actualTime))
+    {
+      tempData.mode = tempData.tempDataProg.mode;
+      tempData.desiredTemperature = tempData.tempDataProg.desiredTemperature;
+      tempData.status = on;
     }
   }
 
-  if(strlen(tempData.tempDataProg.offDate) > 0){
-    while (!getLocalTime(&actualTime)) { //Obtenemos la fecha actual
-      sendData(requestTime,tempData);
-      };
+  if (strlen(tempData.tempDataProg.offDate) > 0)
+  {
+    while (!getLocalTime(&actualTime))
+    { // Obtenemos la fecha actual
+      sendData(requestTime, tempData);
+    };
 
-      tm tmOffDate = convertStringToTm(tempData.tempDataProg.offDate);
-      //Si el tiempo de apagado es menor al tiempo actual, significa que debe de apagarse
-      if(mktime(&tmOffDate)<mktime(&actualTime)){
-        tempData.status=off;
-        strcpy(tempData.tempDataProg.offDate, ""); // Ensure offDate is a modifiable character array
-        strcpy(tempData.tempDataProg.onDate, "");
-      }
+    tm tmOffDate = convertStringToTm(tempData.tempDataProg.offDate);
+    // Si el tiempo de apagado es menor al tiempo actual, significa que debe de apagarse
+    if (mktime(&tmOffDate) < mktime(&actualTime))
+    {
+      tempData.mode = off;
+      tempData.status = off;
+      strcpy(tempData.tempDataProg.offDate, ""); // Ensure offDate is a modifiable character array
+      strcpy(tempData.tempDataProg.onDate, "");
     }
+  }
 
   char buffer[25];
   strftime(buffer, sizeof(buffer), "%Y-%m-%dT%H:%M:%S", &actualTime);

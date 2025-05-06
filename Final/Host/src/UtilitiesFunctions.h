@@ -120,8 +120,8 @@ void printAccsHistory(std::list<accsEvent> accsHistory)
 void getDateServer(char *date, size_t size)
 {
   const char *ntpServer = "pool.ntp.org";
-  const long gmtOffset_sec =  -6 * 3600; // Offset para UTC-6
-  const int daylightOffset_sec = 3600; // Ajuste de horario de verano (si aplica)
+  const long gmtOffset_sec = -7 * 3600; // Offset para UTC-6
+  const int daylightOffset_sec = 3600;  // Ajuste de horario de verano (si aplica)
   struct tm timeInfo;
 
   configTime(gmtOffset_sec, daylightOffset_sec, ntpServer);
@@ -255,7 +255,8 @@ JsonDocument updateDoc(char module)
     break;
 
   case lightModule:
-    JsonArray arr = doc.to<JsonArray>();
+    doc["on"] = receivedData.lightModule.on;
+    JsonArray arr = doc.createNestedArray("lightDevices");
     for (int i = 0; i < numLightDevices; i++)
     {
       JsonObject individualLight = arr.createNestedObject();
@@ -411,12 +412,13 @@ void printLightDevices(const lightDevices &devices)
   }
 }
 
-void initializeLED(){
+void initializeLED()
+{
   ledcSetup(led.bluePwm, 5000, 8);
   ledcAttachPin(led.bluePin, led.bluePwm);
   ledcSetup(led.greenPwm, 5000, 8);
   ledcAttachPin(led.greenPin, led.greenPwm);
-  ledcSetup(led.red,5000, 8);
+  ledcSetup(led.red, 5000, 8);
   ledcAttachPin(led.redPin, led.redPwm);
 
   ledcWrite(led.bluePwm, 255);
@@ -430,60 +432,60 @@ void initializeLED(){
   ledcWrite(led.redPwm, 0);
 }
 
-
-void controlStatusLED(char state){
-  switch (state)
+void controlStatusLED(char state)
 {
-  case CLEAR: // '1'
-    ledcWrite(led.greenPwm, 255);  // Verde fuerte
+  switch (state)
+  {
+  case CLEAR:                     // '1'
+    ledcWrite(led.greenPwm, 255); // Verde fuerte
     ledcWrite(led.redPwm, 0);
     ledcWrite(led.bluePwm, 0);
     break;
 
-  case ERROR: // '2'
-    ledcWrite(led.redPwm, 255);    // Rojo fuerte
+  case ERROR:                   // '2'
+    ledcWrite(led.redPwm, 255); // Rojo fuerte
     ledcWrite(led.greenPwm, 0);
     ledcWrite(led.bluePwm, 0);
     break;
 
-  case WAITING: // '3'
-    ledcWrite(led.bluePwm, 255);   // Azul fuerte
+  case WAITING:                  // '3'
+    ledcWrite(led.bluePwm, 255); // Azul fuerte
     ledcWrite(led.redPwm, 0);
     ledcWrite(led.greenPwm, 0);
     break;
 
-  case SENDLIGHT: // '4'
-    ledcWrite(led.redPwm, 255);    // Naranja (Rojo fuerte + Verde medio)
+  case SENDLIGHT:               // '4'
+    ledcWrite(led.redPwm, 255); // Naranja (Rojo fuerte + Verde medio)
     ledcWrite(led.greenPwm, 128);
     ledcWrite(led.bluePwm, 0);
     break;
 
-  case SENDACCS: // '5'
-    ledcWrite(led.bluePwm, 255);   // Violeta (Azul + Rojo medio)
+  case SENDACCS:                 // '5'
+    ledcWrite(led.bluePwm, 255); // Violeta (Azul + Rojo medio)
     ledcWrite(led.redPwm, 128);
     ledcWrite(led.greenPwm, 0);
     break;
 
-  case SENDTEMP: // '6'
-    ledcWrite(led.greenPwm, 255);  // Amarillo (Rojo medio + Verde fuerte)
+  case SENDTEMP:                  // '6'
+    ledcWrite(led.greenPwm, 255); // Amarillo (Rojo medio + Verde fuerte)
     ledcWrite(led.redPwm, 128);
     ledcWrite(led.bluePwm, 0);
     break;
 
-  case RECEIVEDLIGHT: // '7'
-    ledcWrite(led.greenPwm, 255);  // Cian (Verde + Azul fuerte)
+  case RECEIVEDLIGHT:             // '7'
+    ledcWrite(led.greenPwm, 255); // Cian (Verde + Azul fuerte)
     ledcWrite(led.bluePwm, 255);
     ledcWrite(led.redPwm, 0);
     break;
 
-  case RECEIVEDACCS: // '8'
-    ledcWrite(led.bluePwm, 128);   // Azul bajito
-    ledcWrite(led.greenPwm, 255);  // Verde fuerte
+  case RECEIVEDACCS:              // '8'
+    ledcWrite(led.bluePwm, 128);  // Azul bajito
+    ledcWrite(led.greenPwm, 255); // Verde fuerte
     ledcWrite(led.redPwm, 0);
     break;
 
-  case RECEIVEDTEMP: // '9'
-    ledcWrite(led.redPwm, 255);    // Rosa (Rojo fuerte + Azul medio)
+  case RECEIVEDTEMP:            // '9'
+    ledcWrite(led.redPwm, 255); // Rosa (Rojo fuerte + Azul medio)
     ledcWrite(led.bluePwm, 128);
     ledcWrite(led.greenPwm, 0);
     break;
@@ -494,8 +496,7 @@ void controlStatusLED(char state){
     ledcWrite(led.greenPwm, 0);
     ledcWrite(led.bluePwm, 0);
     break;
-}
-
+  }
 }
 
 #endif

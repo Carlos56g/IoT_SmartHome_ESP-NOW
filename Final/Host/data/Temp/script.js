@@ -36,11 +36,11 @@ function toggleOnOffTemp() {
 function OnOffTemp() {
     if (toggleOnOffTemp()) {
         tempOn();
-        document.getElementById("Temp").className="enabled-style";
+        document.getElementById("Temp").className = "enabled-style";
     }
     else {
         tempOff();
-        document.getElementById("Temp").className="disabled-style";
+        document.getElementById("Temp").className = "disabled-style";
     }
 }
 
@@ -84,6 +84,9 @@ function getTempData() {
                 tempMode.value = String.fromCharCode(data.mode);
             }
 
+            if (data.mode != 79) {
+                document.getElementById("desiredTemperatureInput").disabled = true;
+            }
         })
         .catch(error => console.error("Error al obtener la temperatura actual:", error));
 }
@@ -126,6 +129,12 @@ function tempOn() {
 function updateTempData() {
     tempData.mode = document.getElementById("tempModeSelect").value;
     tempData.status = modes.on; //Para actualzar los datos de la temperetura, debe de estar prendido
+
+    if (tempData.mode === modes.autoMode) {
+        document.getElementById('desiredTemperatureInput').disabled = false;
+    } else {
+        document.getElementById("desiredTemperatureInput").disabled = true;
+    }
 
     if (tempData.mode === modes.autoMode) { //Si es modo automatico, agarrar el valor del input
         tempData.desiredTemperature = document.getElementById("desiredTemperatureInput").value
@@ -177,7 +186,18 @@ function validateDate(onDate, OffDate) {
         return true;
 }
 
+function validateMode() {
+    var mode = document.getElementById("tempProgModeSelect").value;
+    if (mode != modes.autoMode) {
+        document.getElementById("desiredProgTemperatureInput").disabled = true;
+    }
+
+}
+
+
 //Obtendra la temperatura cada 2s
-setInterval(getTempData, 2000);
+if (window.location.pathname === "/Temp/Details") {
+    setInterval(getTempData, 2000);
+}
 
 
